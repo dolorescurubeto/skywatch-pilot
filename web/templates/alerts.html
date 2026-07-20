@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SkyWatch Pilot — Alerts</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Outfit:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/css/app.css" />
+  </head>
+  <body>
+    <div class="app-shell fade-in">
+      <header class="topbar">
+        <h1 class="brand brand-mark">SkyWatch Pilot</h1>
+        <nav class="nav">
+          <a href="/drones" data-testid="nav-drones">My drones</a>
+          <a href="/map" data-testid="nav-map">Map</a>
+          <a class="active" href="/alerts" data-testid="nav-alerts">Alerts</a>
+          <button class="btn-ghost" type="button" id="logout-btn" data-testid="logout-btn">Log out</button>
+        </nav>
+      </header>
+
+      <section class="panel">
+        <h2 class="page-title">Alerts</h2>
+        <p class="page-sub">Active issues for your drones — low battery and offline.</p>
+        <ul class="alert-list" id="alerts-list" data-testid="alerts-list"></ul>
+        <p class="empty" id="alerts-empty" hidden>No active alerts. All clear.</p>
+        <p class="error" id="page-error" aria-live="polite"></p>
+      </section>
+    </div>
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/alerts.js"></script>
+  </body>
+</html>

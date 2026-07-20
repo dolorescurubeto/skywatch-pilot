@@ -1,0 +1,50 @@
+[
+  {
+    "id": "drn_01",
+    "pilot_id": "pilot_001",
+    "name": "Alpha",
+    "status": "flying",
+    "battery_percent": 78,
+    "altitude_m": 42.5,
+    "lat": -34.6037,
+    "lon": -58.3816,
+    "last_seen": null,
+    "history": []
+  },
+  {
+    "id": "drn_02",
+    "pilot_id": "pilot_001",
+    "name": "Bravo",
+    "status": "idle",
+    "battery_percent": 18,
+    "altitude_m": 0.0,
+    "lat": -34.6050,
+    "lon": -58.3800,
+    "last_seen": null,
+    "history": []
+  },
+  {
+    "id": "drn_03",
+    "pilot_id": "pilot_001",
+    "name": "Charlie",
+    "status": "offline",
+    "battery_percent": null,
+    "altitude_m": null,
+    "lat": -34.6100,
+    "lon": -58.3900,
+    "last_seen": null,
+    "history": []
+  },
+  {
+    "id": "drn_10",
+    "pilot_id": "pilot_002",
+    "name": "Delta",
+    "status": "idle",
+    "battery_percent": 55,
+    "altitude_m": 0.0,
+    "lat": -34.6000,
+    "lon": -58.3700,
+    "last_seen": null,
+    "history": []
+  }
+]

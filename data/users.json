@@ -1,0 +1,16 @@
+[
+  {
+    "email": "pilot@demo.com",
+    "password": "demo123",
+    "pilot_id": "pilot_001",
+    "token": "pilot-001-demo-token",
+    "name": "Demo Pilot"
+  },
+  {
+    "email": "pilot2@demo.com",
+    "password": "demo123",
+    "pilot_id": "pilot_002",
+    "token": "pilot-002-demo-token",
+    "name": "Second Pilot"
+  }
+]
