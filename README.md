@@ -76,12 +76,15 @@ try { Invoke-WebRequest http://127.0.0.1:8080/api/v1/drones } catch { $_.Excepti
 | GET | `/api/v1/drones` | Yes |
 | GET | `/api/v1/drones/{id}` | Yes |
 | GET | `/api/v1/alerts` | Yes |
+| GET | `/api/v1/alerts/history` | Yes |
+| GET | `/api/v1/geofence` | Yes |
 | POST | `/api/v1/admin/reset-seed` | No (dev) |
 
 ## Alert rules
 
 - **LOW_BATTERY** — battery &lt; 20% and not offline
 - **OFFLINE** — status offline or no telemetry for &gt; 5 minutes
+- **GEOFENCE_BREACH** — drone lat/lon is outside the authorized flight zone
 
 ## Project layout
 
@@ -112,7 +115,11 @@ Open in browser: **http://localhost:8080/login**
 
 Flow: Login → My drones → **Map** → Detail → Alerts → Acknowledge → Log out.
 
-**Map:** http://localhost:8080/map — markers by status (flying / idle / offline / alert), click popup → Open detail.
+**Map:** http://localhost:8080/map — markers by status, flight paths, and a dashed **geofence** (authorized zone). Charlie starts outside → `GEOFENCE_BREACH`.
+
+**Filters:** on **My drones** and **Map**, filter by status (All / Flying / Idle / Offline) and alerts (All / Has alert). The count shows `Showing X of Y`.
+
+**Alerts:** tabs **Active** (open issues + Acknowledge) and **History** (acked alerts with timestamp).
 
 ## Tests
 

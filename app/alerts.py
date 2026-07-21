@@ -27,6 +27,8 @@ def _minutes_since(last_seen: str | None, now: datetime | None = None) -> float 
 
 def compute_alerts_for_drone(drone: dict, now: datetime | None = None) -> list[dict]:
     """Return rule-based alerts for one drone (ignores acknowledgements)."""
+    from app.geofence import is_inside_geofence
+
     now = now or utc_now()
     alerts: list[dict] = []
     drone_id = drone["id"]
@@ -34,6 +36,19 @@ def compute_alerts_for_drone(drone: dict, now: datetime | None = None) -> list[d
     status = drone.get("status")
     battery = drone.get("battery_percent")
     mins = _minutes_since(drone.get("last_seen"), now)
+
+    inside = is_inside_geofence(drone.get("lat"), drone.get("lon"))
+    if inside is False:
+        alerts.append(
+            {
+                "id": f"alert_{drone_id}_geofence",
+                "drone_id": drone_id,
+                "drone_name": name,
+                "type": "GEOFENCE_BREACH",
+                "message": f"{name} - Outside authorized flight zone",
+                "battery_percent": battery,
+            }
+        )
 
     offline = status == "offline" or (mins is not None and mins * 60 > OFFLINE_AFTER_SECONDS)
     if offline:
@@ -88,12 +103,15 @@ def acknowledge_alert_for_pilot(pilot_id: str, alert_id: str, drones: list[dict]
     match = next((a for a in candidates if a["id"] == alert_id), None)
     if not match:
         return None
-    acknowledge_alert(pilot_id, alert_id)
+    # Skip if already acknowledged (still "active" condition but hidden)
+    if alert_id in get_acknowledged_ids(pilot_id):
+        return None
+    acknowledge_alert(pilot_id, match)
     return match
 
 
 def enrich_drone_list_item(drone: dict, pilot_id: str | None = None) -> dict:
-    """List row: flags if any *unacknowledged* alert."""
+    """List row: flags if any *unacknowledged* alert + compact flight path for map."""
     item = deepcopy(drone)
     alerts = compute_alerts_for_drone(drone)
     if pilot_id:
@@ -101,5 +119,15 @@ def enrich_drone_list_item(drone: dict, pilot_id: str | None = None) -> dict:
         alerts = [a for a in alerts if a["id"] not in acked]
     item["has_alert"] = len(alerts) > 0
     item["alerts"] = alerts
+
+    path: list[dict] = []
+    for h in item.get("history") or []:
+        if h.get("lat") is not None and h.get("lon") is not None:
+            path.append({"lat": h["lat"], "lon": h["lon"]})
+    if item.get("lat") is not None and item.get("lon") is not None:
+        cur = {"lat": item["lat"], "lon": item["lon"]}
+        if not path or path[-1] != cur:
+            path.append(cur)
+    item["flight_path"] = path
     item.pop("history", None)
     return item

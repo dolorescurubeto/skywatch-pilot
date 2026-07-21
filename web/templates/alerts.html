@@ -26,9 +26,45 @@
 
       <section class="panel">
         <h2 class="page-title">Alerts</h2>
-        <p class="page-sub">Active issues for your drones — low battery and offline.</p>
-        <ul class="alert-list" id="alerts-list" data-testid="alerts-list"></ul>
-        <p class="empty" id="alerts-empty" hidden>No active alerts. All clear.</p>
+        <p class="page-sub">Active issues and acknowledgement history.</p>
+
+        <div class="alert-tabs" data-testid="alert-tabs" role="tablist">
+          <button
+            type="button"
+            class="alert-tab active"
+            data-view="active"
+            data-testid="tab-active"
+            role="tab"
+            aria-selected="true"
+          >
+            Active
+          </button>
+          <button
+            type="button"
+            class="alert-tab"
+            data-view="history"
+            data-testid="tab-history"
+            role="tab"
+            aria-selected="false"
+          >
+            History
+          </button>
+        </div>
+
+        <div id="view-active" data-testid="view-active">
+          <ul class="alert-list" id="alerts-list" data-testid="alerts-list"></ul>
+          <p class="empty" id="alerts-empty" hidden data-testid="alerts-empty">
+            No active alerts. All clear.
+          </p>
+        </div>
+
+        <div id="view-history" data-testid="view-history" hidden>
+          <ul class="alert-list" id="history-list" data-testid="history-list"></ul>
+          <p class="empty" id="history-empty" hidden data-testid="history-empty">
+            No acknowledged alerts yet.
+          </p>
+        </div>
+
         <p class="error" id="page-error" aria-live="polite"></p>
       </section>
     </div>

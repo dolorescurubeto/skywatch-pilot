@@ -12,21 +12,21 @@ document.addEventListener("DOMContentLoaded", async () => {
   const tbody = document.getElementById("drones-body");
   const errorEl = document.getElementById("page-error");
   const refreshedEl = document.getElementById("last-refreshed");
+  let cachedDrones = [];
 
-  async function loadDrones() {
-    const { ok, body, status } = await api("/api/v1/drones");
-    if (!ok) {
-      errorEl.textContent =
-        status === 401 ? "Session expired. Please log in again." : "Could not load drones.";
-      if (status === 401) {
-        clearSession();
-        setTimeout(() => (window.location.href = "/login"), 800);
-      }
+  function renderRows(drones) {
+    const filtered = drones.filter((d) => matchesFleetFilters(d));
+    updateFilterCount(filtered.length, drones.length);
+
+    if (!filtered.length) {
+      tbody.innerHTML = `
+        <tr data-testid="filter-empty">
+          <td colspan="5" class="empty">No drones match these filters.</td>
+        </tr>`;
       return;
     }
 
-    errorEl.textContent = "";
-    tbody.innerHTML = body.drones
+    tbody.innerHTML = filtered
       .map((d) => {
         const alertBadge = d.has_alert
           ? `<span class="badge warn" data-testid="alert-badge-${d.id}">alert</span>`
@@ -47,14 +47,37 @@ document.addEventListener("DOMContentLoaded", async () => {
         window.location.href = `/drones/${row.dataset.id}`;
       });
     });
+  }
+
+  async function loadDrones() {
+    const { ok, body, status } = await api("/api/v1/drones");
+    if (!ok) {
+      errorEl.textContent =
+        status === 401 ? "Session expired. Please log in again." : "Could not load drones.";
+      if (status === 401) {
+        clearSession();
+        setTimeout(() => (window.location.href = "/login"), 800);
+      }
+      return;
+    }
+
+    errorEl.textContent = "";
+    cachedDrones = body.drones || [];
+    renderRows(cachedDrones);
 
     if (refreshedEl) {
-      const now = new Date();
-      refreshedEl.textContent = `Updated ${now.toLocaleTimeString()}`;
+      refreshedEl.textContent = `Updated ${new Date().toLocaleTimeString()}`;
     }
 
     await updateAlertsNavBadge();
   }
+
+  document.getElementById("filter-status").addEventListener("change", () => {
+    renderRows(cachedDrones);
+  });
+  document.getElementById("filter-alerts").addEventListener("change", () => {
+    renderRows(cachedDrones);
+  });
 
   await loadDrones();
   setInterval(loadDrones, REFRESH_MS);

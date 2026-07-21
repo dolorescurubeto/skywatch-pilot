@@ -34,8 +34,9 @@ def tick_once() -> None:
         if d["status"] == "flying":
             battery = max(0, battery - random.randint(0, 2))
             d["altitude_m"] = round(max(5.0, (d.get("altitude_m") or 30) + random.uniform(-2, 2)), 1)
-            d["lat"] = round((d.get("lat") or -34.60) + random.uniform(-0.0005, 0.0005), 5)
-            d["lon"] = round((d.get("lon") or -58.38) + random.uniform(-0.0005, 0.0005), 5)
+            # Keep drifting so the flight path lengthens on the map (~150–250 m/step)
+            d["lat"] = round((d.get("lat") or -34.60) + random.uniform(-0.0020, 0.0020), 5)
+            d["lon"] = round((d.get("lon") or -58.38) + random.uniform(-0.0020, 0.0020), 5)
         else:
             battery = min(100, battery + random.randint(0, 1))
             d["altitude_m"] = 0.0

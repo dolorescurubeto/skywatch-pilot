@@ -105,8 +105,9 @@ def test_alerts_page_lists_issues(skywatch_server, page):
     _login(page, skywatch_server)
     page.get_by_test_id("nav-alerts").click()
     page.wait_for_url("**/alerts")
-    page.get_by_test_id("alert-drn_02").wait_for(state="visible", timeout=10000)
-    assert page.get_by_test_id("alert-drn_03").is_visible()
+    page.get_by_test_id("alert-item-alert_drn_02_battery").wait_for(state="visible", timeout=10000)
+    assert page.get_by_test_id("alert-item-alert_drn_03_offline").is_visible()
+    assert page.get_by_test_id("alert-item-alert_drn_03_geofence").is_visible()
 
 
 @pytest.mark.e2e
@@ -120,12 +121,20 @@ def test_acknowledge_removes_alert_from_ui(skywatch_server, page):
     page.get_by_test_id("nav-alerts").click()
     page.wait_for_url("**/alerts")
 
-    bravo = page.get_by_test_id("alert-drn_02")
+    bravo = page.get_by_test_id("alert-item-alert_drn_02_battery")
     bravo.wait_for(state="visible")
     page.get_by_test_id("ack-alert_drn_02_battery").click()
     bravo.wait_for(state="hidden", timeout=10000)
 
-    assert page.get_by_test_id("alert-drn_03").is_visible()
+    # Still on Active tab — other alerts remain
+    assert page.get_by_test_id("view-active").is_visible()
+    assert page.get_by_test_id("alert-item-alert_drn_03_offline").is_visible()
+
+    # Acknowledgement lands in History tab
+    page.get_by_test_id("tab-history").click()
+    page.get_by_test_id("view-history").wait_for(state="visible")
+    page.get_by_test_id("history-item-alert_drn_02_battery").wait_for(state="visible")
+    assert page.get_by_test_id("history-acked-label").first.is_visible()
 
 
 @pytest.mark.e2e
@@ -158,6 +167,24 @@ def test_map_page_shows_fleet_and_markers(skywatch_server, page):
 
 
 @pytest.mark.e2e
+def test_map_shows_flight_path_for_flying_drone(skywatch_server, page):
+    """Alpha (flying) should have a Leaflet polyline path on the map."""
+    import urllib.request
+
+    req = urllib.request.Request(f"{skywatch_server}/api/v1/admin/reset-seed", method="POST")
+    urllib.request.urlopen(req, timeout=3)
+
+    _login(page, skywatch_server)
+    page.get_by_test_id("nav-map").click()
+    page.wait_for_url("**/map")
+    page.get_by_test_id("marker-drn_01").wait_for(state="visible", timeout=10000)
+
+    # Leaflet draws SVG paths for polylines
+    paths = page.locator(".leaflet-overlay-pane path")
+    assert paths.count() >= 1
+
+
+@pytest.mark.e2e
 def test_map_marker_opens_detail(skywatch_server, page):
     import urllib.request
 
@@ -172,5 +199,76 @@ def test_map_marker_opens_detail(skywatch_server, page):
     page.get_by_test_id("marker-drn_01").click()
     page.get_by_role("link", name="Open detail →").click()
     page.wait_for_url("**/drones/drn_01")
-    assert page.get_by_test_id("drone-detail").is_visible()
+    page.get_by_test_id("drone-detail").wait_for(state="visible")
+    page.locator("#drone-name").filter(has_text="Alpha").wait_for(timeout=10000)
     assert "Alpha" in page.locator("#drone-name").inner_text()
+
+
+@pytest.mark.e2e
+def test_filter_status_flying_on_list(skywatch_server, page):
+    import urllib.request
+
+    req = urllib.request.Request(f"{skywatch_server}/api/v1/admin/reset-seed", method="POST")
+    urllib.request.urlopen(req, timeout=3)
+
+    _login(page, skywatch_server)
+    page.get_by_test_id("filter-bar").wait_for(state="visible")
+    page.get_by_test_id("filter-status").select_option("flying")
+
+    assert page.get_by_test_id("drone-row-drn_01").is_visible()
+    assert page.get_by_test_id("drone-row-drn_02").count() == 0
+    assert page.get_by_test_id("drone-row-drn_03").count() == 0
+    assert "Showing 1 of 3" in page.get_by_test_id("filter-count").inner_text()
+
+
+@pytest.mark.e2e
+def test_filter_alerts_only_on_list(skywatch_server, page):
+    import urllib.request
+
+    req = urllib.request.Request(f"{skywatch_server}/api/v1/admin/reset-seed", method="POST")
+    urllib.request.urlopen(req, timeout=3)
+
+    _login(page, skywatch_server)
+    page.get_by_test_id("filter-alerts").select_option("alert")
+
+    assert page.get_by_test_id("drone-row-drn_02").is_visible()  # Bravo low battery
+    assert page.get_by_test_id("drone-row-drn_03").is_visible()  # Charlie offline + geofence
+    assert page.get_by_test_id("drone-row-drn_01").count() == 0
+    assert page.get_by_test_id("alert-badge-drn_02").is_visible()
+    assert "Showing 2 of 3" in page.get_by_test_id("filter-count").inner_text()
+
+
+@pytest.mark.e2e
+def test_filter_status_flying_on_map(skywatch_server, page):
+    import urllib.request
+
+    req = urllib.request.Request(f"{skywatch_server}/api/v1/admin/reset-seed", method="POST")
+    urllib.request.urlopen(req, timeout=3)
+
+    _login(page, skywatch_server)
+    page.get_by_test_id("nav-map").click()
+    page.wait_for_url("**/map")
+    page.get_by_test_id("marker-drn_01").wait_for(state="visible", timeout=10000)
+
+    page.get_by_test_id("filter-status").select_option("flying")
+    page.get_by_test_id("marker-drn_01").wait_for(state="visible", timeout=5000)
+    assert page.get_by_test_id("marker-drn_02").count() == 0
+    assert page.get_by_test_id("marker-drn_03").count() == 0
+
+
+@pytest.mark.e2e
+def test_map_shows_geofence_zone(skywatch_server, page):
+    import urllib.request
+
+    req = urllib.request.Request(f"{skywatch_server}/api/v1/admin/reset-seed", method="POST")
+    urllib.request.urlopen(req, timeout=3)
+
+    _login(page, skywatch_server)
+    page.get_by_test_id("nav-map").click()
+    page.wait_for_url("**/map")
+    page.get_by_test_id("fleet-map").wait_for(state="visible")
+    # Leaflet polygon is an SVG path in the overlay pane
+    page.locator(".leaflet-overlay-pane path.geofence-zone, .leaflet-overlay-pane path").first.wait_for(
+        state="visible", timeout=10000
+    )
+    assert "geofence" in page.get_by_test_id("map-legend").inner_text().lower()

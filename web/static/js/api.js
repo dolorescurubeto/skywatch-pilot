@@ -63,6 +63,28 @@ function batteryText(value) {
   return value === null || value === undefined ? "—" : `${value}%`;
 }
 
+/** Client-side fleet filters (status + has_alert). */
+function readFleetFilters() {
+  const statusEl = document.getElementById("filter-status");
+  const alertsEl = document.getElementById("filter-alerts");
+  return {
+    status: statusEl ? statusEl.value : "all",
+    alerts: alertsEl ? alertsEl.value : "all",
+  };
+}
+
+function matchesFleetFilters(drone, filters = readFleetFilters()) {
+  if (filters.status !== "all" && drone.status !== filters.status) return false;
+  if (filters.alerts === "alert" && !drone.has_alert) return false;
+  return true;
+}
+
+function updateFilterCount(shown, total) {
+  const el = document.getElementById("filter-count");
+  if (!el) return;
+  el.textContent = `Showing ${shown} of ${total}`;
+}
+
 async function logout() {
   const token = getToken();
   if (token) {

@@ -13,9 +13,11 @@ from app.alerts import (
     enrich_drone_list_item,
 )
 from app.auth import require_auth
+from app.geofence import get_geofence
 from app.store import (
     find_user_by_email,
     get_acknowledged_ids,
+    get_alert_history,
     get_drone,
     load_drones,
     reset_drones_from_seed,
@@ -137,6 +139,20 @@ def list_alerts():
     pilot_id = g.current_user["pilot_id"]
     alerts = compute_alerts_for_pilot(load_drones(), pilot_id)
     return jsonify({"count": len(alerts), "alerts": alerts})
+
+
+@app.get("/api/v1/alerts/history")
+@require_auth
+def alerts_history():
+    pilot_id = g.current_user["pilot_id"]
+    history = get_alert_history(pilot_id)
+    return jsonify({"count": len(history), "history": history})
+
+
+@app.get("/api/v1/geofence")
+@require_auth
+def geofence():
+    return jsonify(get_geofence())
 
 
 @app.post("/api/v1/alerts/<alert_id>/acknowledge")

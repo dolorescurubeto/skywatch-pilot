@@ -31,6 +31,25 @@
           Live status for your fleet. Click a row for detail.
           <span id="last-refreshed" data-testid="last-refreshed" class="hint" style="display:inline;margin:0"></span>
         </p>
+        <div class="filter-bar" data-testid="filter-bar">
+          <label class="filter-field">
+            Status
+            <select id="filter-status" data-testid="filter-status">
+              <option value="all">All</option>
+              <option value="flying">Flying</option>
+              <option value="idle">Idle</option>
+              <option value="offline">Offline</option>
+            </select>
+          </label>
+          <label class="filter-field">
+            Alerts
+            <select id="filter-alerts" data-testid="filter-alerts">
+              <option value="all">All</option>
+              <option value="alert">Has alert</option>
+            </select>
+          </label>
+          <span class="filter-count" id="filter-count" data-testid="filter-count"></span>
+        </div>
         <div class="table-wrap">
           <table data-testid="drones-table">
             <thead>

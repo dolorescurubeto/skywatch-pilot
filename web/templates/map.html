@@ -37,12 +37,33 @@
           Live positions for your drones. Click a marker for detail.
           <span id="last-refreshed" data-testid="map-last-refreshed" class="hint" style="display:inline;margin:0"></span>
         </p>
+        <div class="filter-bar" data-testid="filter-bar">
+          <label class="filter-field">
+            Status
+            <select id="filter-status" data-testid="filter-status">
+              <option value="all">All</option>
+              <option value="flying">Flying</option>
+              <option value="idle">Idle</option>
+              <option value="offline">Offline</option>
+            </select>
+          </label>
+          <label class="filter-field">
+            Alerts
+            <select id="filter-alerts" data-testid="filter-alerts">
+              <option value="all">All</option>
+              <option value="alert">Has alert</option>
+            </select>
+          </label>
+          <span class="filter-count" id="filter-count" data-testid="filter-count"></span>
+        </div>
         <div id="fleet-map" class="fleet-map" data-testid="fleet-map"></div>
         <div class="map-legend" data-testid="map-legend">
           <span><i class="dot flying"></i> flying</span>
           <span><i class="dot idle"></i> idle</span>
           <span><i class="dot offline"></i> offline</span>
           <span><i class="dot alert"></i> has alert</span>
+          <span><i class="path-sample"></i> flight path</span>
+          <span><i class="geofence-sample"></i> geofence</span>
         </div>
         <p class="error" id="page-error" aria-live="polite"></p>
       </section>

@@ -57,6 +57,17 @@ def test_drones_list_for_pilot(client, pilot_token):
     assert "drn_10" not in ids
 
 
+def test_flying_drone_includes_flight_path(client, pilot_token):
+    r = client.get("/api/v1/drones", headers=auth_headers(pilot_token))
+    drones = {d["id"]: d for d in r.get_json()["drones"]}
+    alpha = drones["drn_01"]
+    assert alpha["status"] == "flying"
+    assert "flight_path" in alpha
+    assert len(alpha["flight_path"]) >= 2
+    assert "lat" in alpha["flight_path"][0]
+    assert "lon" in alpha["flight_path"][0]
+
+
 def test_drone_detail_ok(client, pilot_token):
     r = client.get("/api/v1/drones/drn_01", headers=auth_headers(pilot_token))
     assert r.status_code == 200
@@ -86,9 +97,29 @@ def test_alerts_include_low_battery_and_offline(client, pilot_token):
     types = {a["type"] for a in body["alerts"]}
     assert "LOW_BATTERY" in types
     assert "OFFLINE" in types
+    assert "GEOFENCE_BREACH" in types
     drone_ids = {a["drone_id"] for a in body["alerts"]}
     assert "drn_02" in drone_ids  # Bravo low battery
-    assert "drn_03" in drone_ids  # Charlie offline
+    assert "drn_03" in drone_ids  # Charlie offline + outside geofence
+
+
+def test_geofence_endpoint_returns_polygon(client, pilot_token):
+    r = client.get("/api/v1/geofence", headers=auth_headers(pilot_token))
+    assert r.status_code == 200
+    body = r.get_json()
+    assert body["id"] == "zone_ba_centro"
+    assert len(body["polygon"]) >= 3
+    assert all(len(p) == 2 for p in body["polygon"])
+
+
+def test_charlie_outside_geofence_alpha_inside(client, pilot_token):
+    r = client.get("/api/v1/drones", headers=auth_headers(pilot_token))
+    drones = {d["id"]: d for d in r.get_json()["drones"]}
+    charlie_types = {a["type"] for a in drones["drn_03"]["alerts"]}
+    alpha_types = {a["type"] for a in drones["drn_01"]["alerts"]}
+    assert "GEOFENCE_BREACH" in charlie_types
+    assert "GEOFENCE_BREACH" not in alpha_types
+    assert drones["drn_03"]["has_alert"] is True
 
 
 def test_alerts_requires_auth(client):
@@ -122,6 +153,18 @@ def test_acknowledge_alert_removes_from_list(client, pilot_token):
     after = client.get("/api/v1/alerts", headers=headers).get_json()
     assert after["count"] == before["count"] - 1
     assert alert_id not in {a["id"] for a in after["alerts"]}
+
+    history = client.get("/api/v1/alerts/history", headers=headers).get_json()
+    assert history["count"] >= 1
+    assert history["history"][0]["id"] == alert_id
+    assert "acknowledged_at" in history["history"][0]
+
+
+def test_alerts_history_empty_before_ack(client, pilot_token):
+    r = client.get("/api/v1/alerts/history", headers=auth_headers(pilot_token))
+    assert r.status_code == 200
+    assert r.get_json()["count"] == 0
+    assert r.get_json()["history"] == []
 
 
 def test_acknowledge_unknown_alert_404(client, pilot_token):

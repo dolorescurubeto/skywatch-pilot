@@ -86,23 +86,38 @@ def _seed_drones() -> list[dict]:
 
 
 def _initial_history(drone: dict) -> list[dict]:
-    """Short history for detail screen (5 readings)."""
+    """History for detail screen + a clearly visible map flight path."""
     now = utc_now()
     readings = []
     battery = drone.get("battery_percent")
-    for i in range(5, 0, -1):
+    base_lat = drone.get("lat") or -34.60
+    base_lon = drone.get("lon") or -58.38
+    # ~1.5–2 km trail so paths read clearly at city zoom (not hidden under the marker)
+    for i in range(8, 0, -1):
         ts = now - timedelta(minutes=i)
         b = battery
         if b is not None:
-            b = max(0, min(100, b + (5 - i)))
+            b = max(0, min(100, b + (8 - i)))
+        step = 8 - i  # 0..7 along the route toward current position
+        if drone.get("status") == "flying":
+            # Diagonal approach into current lat/lon
+            lat = round(base_lat - 0.0028 * (7 - step), 5)
+            lon = round(base_lon - 0.0035 * (7 - step), 5)
+            status = "flying"
+            alt = drone.get("altitude_m") or 40.0
+        else:
+            lat = base_lat
+            lon = base_lon
+            status = drone["status"] if i == 1 else "idle"
+            alt = drone.get("altitude_m")
         readings.append(
             {
                 "ts": to_iso(ts),
                 "battery_percent": b,
-                "status": drone["status"] if i == 1 else "idle",
-                "altitude_m": drone.get("altitude_m"),
-                "lat": drone.get("lat"),
-                "lon": drone.get("lon"),
+                "status": status,
+                "altitude_m": alt,
+                "lat": lat,
+                "lon": lon,
             }
         )
     return readings
@@ -132,16 +147,37 @@ def reset_drones_from_seed() -> list[dict]:
     return drones
 
 
-def load_acknowledgements() -> dict[str, list[str]]:
+def load_acknowledgements() -> dict:
+    """
+    Per-pilot ack store:
+      { pilot_id: { "active": [alert_id, ...], "history": [ {alert snapshot + acknowledged_at}, ... ] } }
+
+    Migrates legacy format { pilot_id: [alert_id, ...] }.
+    """
     acks = _acks_file()
     if not acks.exists():
         return {}
     with open(acks, encoding="utf-8") as f:
         data = json.load(f)
-    return data if isinstance(data, dict) else {}
+    if not isinstance(data, dict):
+        return {}
+
+    migrated: dict = {}
+    for pilot_id, value in data.items():
+        if isinstance(value, list):
+            # Legacy: list of ids only
+            migrated[pilot_id] = {"active": list(value), "history": []}
+        elif isinstance(value, dict):
+            migrated[pilot_id] = {
+                "active": list(value.get("active") or []),
+                "history": list(value.get("history") or []),
+            }
+        else:
+            migrated[pilot_id] = {"active": [], "history": []}
+    return migrated
 
 
-def save_acknowledgements(data: dict[str, list[str]]) -> None:
+def save_acknowledgements(data: dict) -> None:
     data_dir = get_data_dir()
     data_dir.mkdir(parents=True, exist_ok=True)
     with open(_acks_file(), encoding="utf-8", mode="w") as f:
@@ -154,25 +190,57 @@ def clear_all_acknowledgements() -> None:
 
 def get_acknowledged_ids(pilot_id: str) -> set[str]:
     data = load_acknowledgements()
-    return set(data.get(pilot_id, []))
+    entry = data.get(pilot_id) or {}
+    return set(entry.get("active") or [])
 
 
-def acknowledge_alert(pilot_id: str, alert_id: str) -> None:
+def get_alert_history(pilot_id: str) -> list[dict]:
+    """Acknowledged alerts newest-first (append-only history)."""
     data = load_acknowledgements()
-    ids = list(data.get(pilot_id, []))
-    if alert_id not in ids:
-        ids.append(alert_id)
-    data[pilot_id] = ids
+    entry = data.get(pilot_id) or {}
+    history = list(entry.get("history") or [])
+    history.reverse()
+    return history
+
+
+def acknowledge_alert(pilot_id: str, alert: dict) -> None:
+    """Mark alert as acknowledged for active filtering and append to history."""
+    data = load_acknowledgements()
+    entry = data.get(pilot_id) or {"active": [], "history": []}
+    alert_id = alert["id"]
+    active = list(entry.get("active") or [])
+    if alert_id not in active:
+        active.append(alert_id)
+
+    history = list(entry.get("history") or [])
+    history.append(
+        {
+            "id": alert_id,
+            "drone_id": alert.get("drone_id"),
+            "drone_name": alert.get("drone_name"),
+            "type": alert.get("type"),
+            "message": alert.get("message"),
+            "battery_percent": alert.get("battery_percent"),
+            "acknowledged_at": to_iso(utc_now()),
+        }
+    )
+    # Keep last 50 history rows
+    history = history[-50:]
+
+    data[pilot_id] = {"active": active, "history": history}
     save_acknowledgements(data)
 
 
 def prune_acknowledgements(pilot_id: str, active_alert_ids: set[str]) -> None:
-    """Drop acks for alerts that are no longer active (condition cleared)."""
+    """Drop *active* acks for alerts that are no longer firing (history is kept)."""
     data = load_acknowledgements()
-    current = set(data.get(pilot_id, []))
+    entry = data.get(pilot_id) or {"active": [], "history": []}
+    current = set(entry.get("active") or [])
     kept = sorted(current & active_alert_ids)
-    if set(data.get(pilot_id, [])) != set(kept):
-        data[pilot_id] = kept
+    if set(entry.get("active") or []) != set(kept):
+        entry["active"] = kept
+        entry["history"] = list(entry.get("history") or [])
+        data[pilot_id] = entry
         save_acknowledgements(data)
 
 
