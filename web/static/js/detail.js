@@ -1,6 +1,11 @@
 document.addEventListener("DOMContentLoaded", async () => {
   if (!requireAuth()) return;
   document.getElementById("logout-btn").addEventListener("click", logout);
+
+  const user = getUser();
+  const nameEl = document.getElementById("pilot-name");
+  if (nameEl && user) nameEl.textContent = user.name || user.email;
+
   await updateAlertsNavBadge();
 
   const parts = window.location.pathname.split("/").filter(Boolean);

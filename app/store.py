@@ -54,6 +54,13 @@ def load_users() -> list[dict]:
         return json.load(f)
 
 
+def save_users(users: list[dict]) -> None:
+    data_dir = get_data_dir()
+    data_dir.mkdir(parents=True, exist_ok=True)
+    with open(_users_file(), encoding="utf-8", mode="w") as f:
+        json.dump(users, f, indent=2)
+
+
 def find_user_by_email(email: str) -> dict | None:
     email_l = email.strip().lower()
     for user in load_users():
@@ -67,6 +74,31 @@ def find_user_by_token(token: str) -> dict | None:
         if user["token"] == token:
             return user
     return None
+
+
+def record_login(email: str) -> dict | None:
+    """Update last_login for the user and return the refreshed user dict."""
+    users = load_users()
+    email_l = email.strip().lower()
+    for user in users:
+        if user["email"].lower() == email_l:
+            user["last_login"] = to_iso(utc_now())
+            save_users(users)
+            return deepcopy(user)
+    return None
+
+
+def public_profile(user: dict) -> dict:
+    """Safe fields for profile API (no password/token)."""
+    return {
+        "pilot_id": user["pilot_id"],
+        "name": user.get("name") or user["email"],
+        "email": user["email"],
+        "role": user.get("role") or "Pilot",
+        "home_base": user.get("home_base") or "—",
+        "license_id": user.get("license_id") or "—",
+        "last_login": user.get("last_login"),
+    }
 
 
 def _seed_drones() -> list[dict]:

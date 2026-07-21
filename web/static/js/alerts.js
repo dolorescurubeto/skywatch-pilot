@@ -2,6 +2,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (!requireAuth()) return;
   document.getElementById("logout-btn").addEventListener("click", logout);
 
+  const user = getUser();
+  const nameEl = document.getElementById("pilot-name");
+  if (nameEl && user) nameEl.textContent = user.name || user.email;
+
   const list = document.getElementById("alerts-list");
   const empty = document.getElementById("alerts-empty");
   const historyList = document.getElementById("history-list");

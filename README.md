@@ -73,6 +73,7 @@ try { Invoke-WebRequest http://127.0.0.1:8080/api/v1/drones } catch { $_.Excepti
 | GET | `/health` | No |
 | POST | `/api/v1/auth/login` | No |
 | POST | `/api/v1/auth/logout` | Yes |
+| GET | `/api/v1/me` | Yes |
 | GET | `/api/v1/drones` | Yes |
 | GET | `/api/v1/drones/{id}` | Yes |
 | GET | `/api/v1/alerts` | Yes |
@@ -120,6 +121,8 @@ Flow: Login → My drones → **Map** → Detail → Alerts → Acknowledge → 
 **Filters:** on **My drones** and **Map**, filter by status (All / Flying / Idle / Offline) and alerts (All / Has alert). The count shows `Showing X of Y`.
 
 **Alerts:** tabs **Active** (open issues + Acknowledge) and **History** (acked alerts with timestamp).
+
+**Profile:** click your name in the nav → `/profile` (email, license, home base, last login, fleet summary).
 
 ## Tests
 

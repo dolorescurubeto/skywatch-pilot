@@ -20,6 +20,8 @@ from app.store import (
     get_alert_history,
     get_drone,
     load_drones,
+    public_profile,
+    record_login,
     reset_drones_from_seed,
 )
 from simulator.telemetry import start_simulator
@@ -68,6 +70,11 @@ def page_map():
     return render_template("map.html")
 
 
+@app.get("/profile")
+def page_profile():
+    return render_template("profile.html")
+
+
 # ---------- API ----------
 
 
@@ -88,6 +95,8 @@ def login():
     if not user or user["password"] != password:
         return jsonify({"error": "invalid_credentials", "message": "Wrong email or password"}), 401
 
+    user = record_login(email) or user
+
     return jsonify(
         {
             "token": user["token"],
@@ -102,6 +111,26 @@ def login():
 @require_auth
 def logout():
     return jsonify({"ok": True})
+
+
+@app.get("/api/v1/me")
+@require_auth
+def me():
+    user = g.current_user
+    pilot_id = user["pilot_id"]
+    drones = [d for d in load_drones() if d["pilot_id"] == pilot_id]
+    fleet = {
+        "total": len(drones),
+        "flying": sum(1 for d in drones if d.get("status") == "flying"),
+        "idle": sum(1 for d in drones if d.get("status") == "idle"),
+        "offline": sum(1 for d in drones if d.get("status") == "offline"),
+    }
+    alerts = compute_alerts_for_pilot(load_drones(), pilot_id)
+    profile = public_profile(user)
+    profile["fleet"] = fleet
+    profile["active_alerts"] = len(alerts)
+    profile["history_count"] = len(get_alert_history(pilot_id))
+    return jsonify(profile)
 
 
 @app.get("/api/v1/drones")

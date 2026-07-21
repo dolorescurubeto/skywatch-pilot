@@ -132,6 +132,18 @@ a {
   border-color: var(--line);
 }
 
+.nav a.nav-profile {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin: 1.5rem 0 0.85rem;
+}
+
 .panel {
   background: var(--card);
   backdrop-filter: blur(12px);

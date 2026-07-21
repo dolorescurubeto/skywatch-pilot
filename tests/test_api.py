@@ -192,3 +192,25 @@ def test_acknowledge_requires_auth(client):
 def test_login_parametrize(client, email, password, expected_status):
     r = client.post("/api/v1/auth/login", json={"email": email, "password": password})
     assert r.status_code == expected_status
+
+
+def test_me_requires_auth(client):
+    r = client.get("/api/v1/me")
+    assert r.status_code == 401
+
+
+def test_me_profile_for_pilot(client, pilot_token):
+    r = client.get("/api/v1/me", headers=auth_headers(pilot_token))
+    assert r.status_code == 200
+    body = r.get_json()
+    assert body["email"] == "pilot@demo.com"
+    assert body["name"] == "Demo Pilot"
+    assert body["pilot_id"] == "pilot_001"
+    assert body["role"] == "Pilot"
+    assert body["license_id"]
+    assert body["home_base"]
+    assert body["last_login"] is not None
+    assert body["fleet"]["total"] == 3
+    assert body["active_alerts"] >= 1
+    assert "password" not in body
+    assert "token" not in body

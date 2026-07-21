@@ -272,3 +272,23 @@ def test_map_shows_geofence_zone(skywatch_server, page):
         state="visible", timeout=10000
     )
     assert "geofence" in page.get_by_test_id("map-legend").inner_text().lower()
+
+
+@pytest.mark.e2e
+def test_profile_page_shows_pilot_info(skywatch_server, page):
+    import urllib.request
+
+    req = urllib.request.Request(f"{skywatch_server}/api/v1/admin/reset-seed", method="POST")
+    urllib.request.urlopen(req, timeout=3)
+
+    _login(page, skywatch_server)
+    page.get_by_test_id("nav-profile").click()
+    page.wait_for_url("**/profile")
+
+    page.get_by_test_id("pilot-profile").wait_for(state="visible")
+    assert "Demo Pilot" in page.locator("#profile-name").inner_text()
+    assert page.get_by_test_id("profile-email").inner_text() == "pilot@demo.com"
+    assert page.get_by_test_id("profile-pilot-id").inner_text() == "pilot_001"
+    assert page.get_by_test_id("profile-license").inner_text()
+    assert page.get_by_test_id("profile-last-login").inner_text() != "—"
+    assert int(page.locator("#fleet-total").inner_text()) == 3

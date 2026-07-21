@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SkyWatch Pilot — Profile</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Outfit:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/css/app.css" />
+  </head>
+  <body>
+    <div class="app-shell fade-in">
+      <header class="topbar">
+        <h1 class="brand brand-mark">SkyWatch Pilot</h1>
+        <nav class="nav">
+          <a href="/drones" data-testid="nav-drones">My drones</a>
+          <a href="/map" data-testid="nav-map">Map</a>
+          <a href="/alerts" data-testid="nav-alerts">Alerts</a>
+          <a class="active nav-profile" href="/profile" id="pilot-name" data-testid="nav-profile"></a>
+          <button class="btn-ghost" type="button" id="logout-btn" data-testid="logout-btn">Log out</button>
+        </nav>
+      </header>
+
+      <section class="panel" data-testid="pilot-profile">
+        <h2 class="page-title" id="profile-name">—</h2>
+        <p class="page-sub" id="profile-role">Pilot profile</p>
+
+        <div class="meta-grid" data-testid="profile-meta">
+          <div class="meta">
+            <span class="meta-label">Email</span>
+            <strong id="profile-email" data-testid="profile-email">—</strong>
+          </div>
+          <div class="meta">
+            <span class="meta-label">Pilot ID</span>
+            <strong id="profile-pilot-id" data-testid="profile-pilot-id">—</strong>
+          </div>
+          <div class="meta">
+            <span class="meta-label">License</span>
+            <strong id="profile-license" data-testid="profile-license">—</strong>
+          </div>
+          <div class="meta">
+            <span class="meta-label">Home base</span>
+            <strong id="profile-home" data-testid="profile-home">—</strong>
+          </div>
+          <div class="meta">
+            <span class="meta-label">Last login</span>
+            <strong id="profile-last-login" data-testid="profile-last-login">—</strong>
+          </div>
+          <div class="meta">
+            <span class="meta-label">Active alerts</span>
+            <strong id="profile-alerts" data-testid="profile-alerts">—</strong>
+          </div>
+        </div>
+
+        <h3 class="section-title">Fleet summary</h3>
+        <div class="meta-grid" data-testid="profile-fleet">
+          <div class="meta">
+            <span class="meta-label">Total</span>
+            <strong id="fleet-total">—</strong>
+          </div>
+          <div class="meta">
+            <span class="meta-label">Flying</span>
+            <strong id="fleet-flying">—</strong>
+          </div>
+          <div class="meta">
+            <span class="meta-label">Idle</span>
+            <strong id="fleet-idle">—</strong>
+          </div>
+          <div class="meta">
+            <span class="meta-label">Offline</span>
+            <strong id="fleet-offline">—</strong>
+          </div>
+        </div>
+
+        <p class="error" id="page-error" aria-live="polite"></p>
+      </section>
+    </div>
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/profile.js"></script>
+  </body>
+</html>

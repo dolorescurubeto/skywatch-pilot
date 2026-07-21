@@ -4,13 +4,21 @@
     "password": "demo123",
     "pilot_id": "pilot_001",
     "token": "pilot-001-demo-token",
-    "name": "Demo Pilot"
+    "name": "Demo Pilot",
+    "role": "Pilot",
+    "home_base": "Buenos Aires, AR",
+    "license_id": "ANAC-UAV-00142",
+    "last_login": "2026-07-21T22:50:05.957596+00:00"
   },
   {
     "email": "pilot2@demo.com",
     "password": "demo123",
     "pilot_id": "pilot_002",
     "token": "pilot-002-demo-token",
-    "name": "Second Pilot"
+    "name": "Second Pilot",
+    "role": "Pilot",
+    "home_base": "C\u00f3rdoba, AR",
+    "license_id": "ANAC-UAV-00987",
+    "last_login": null
   }
 ]
