@@ -78,6 +78,7 @@ try { Invoke-WebRequest http://127.0.0.1:8080/api/v1/drones } catch { $_.Excepti
 | GET | `/api/v1/drones/{id}` | Yes |
 | GET | `/api/v1/alerts` | Yes |
 | GET | `/api/v1/alerts/history` | Yes |
+| GET | `/api/v1/alerts/history/export` | Yes |
 | GET | `/api/v1/geofence` | Yes |
 | POST | `/api/v1/admin/reset-seed` | No (dev) |
 
@@ -118,9 +119,9 @@ Flow: Login → My drones → **Map** → Detail → Alerts → Acknowledge → 
 
 **Map:** http://localhost:8080/map — markers by status, flight paths, and a dashed **geofence** (authorized zone). Charlie starts outside → `GEOFENCE_BREACH`.
 
-**Filters:** on **My drones** and **Map**, filter by status (All / Flying / Idle / Offline) and alerts (All / Has alert). The count shows `Showing X of Y`.
+**Filters:** on **My drones** and **Map** — status, alerts, and **search by name/id**. Count shows `Showing X of Y`.
 
-**Alerts:** tabs **Active** (open issues + Acknowledge) and **History** (acked alerts with timestamp).
+**Alerts:** tabs **Active** / **History**. History has **Export CSV**. New alerts show a **toast** notification while you browse.
 
 **Profile:** click your name in the nav → `/profile` (email, license, home base, last login, fleet summary).
 

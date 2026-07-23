@@ -178,6 +178,29 @@ def alerts_history():
     return jsonify({"count": len(history), "history": history})
 
 
+@app.get("/api/v1/alerts/history/export")
+@require_auth
+def alerts_history_export():
+    import csv
+    import io
+
+    from flask import Response
+
+    pilot_id = g.current_user["pilot_id"]
+    history = get_alert_history(pilot_id)
+    buf = io.StringIO()
+    fields = ["id", "drone_id", "drone_name", "type", "message", "acknowledged_at"]
+    writer = csv.DictWriter(buf, fieldnames=fields, extrasaction="ignore")
+    writer.writeheader()
+    for row in history:
+        writer.writerow({k: row.get(k, "") for k in fields})
+    return Response(
+        buf.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment; filename=alert-history.csv"},
+    )
+
+
 @app.get("/api/v1/geofence")
 @require_auth
 def geofence():

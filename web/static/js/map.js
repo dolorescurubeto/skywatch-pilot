@@ -170,6 +170,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   document.getElementById("filter-status").addEventListener("change", onFilterChange);
   document.getElementById("filter-alerts").addEventListener("change", onFilterChange);
+  document.getElementById("filter-search").addEventListener("input", onFilterChange);
 
   await loadGeofence();
   await loadMap();

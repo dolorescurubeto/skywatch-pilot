@@ -497,7 +497,22 @@ input:focus {
   letter-spacing: normal;
 }
 
-.filter-field select:focus {
+.filter-field input[type="search"] {
+  min-width: 10rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.filter-field select:focus,
+.filter-field input[type="search"]:focus {
   outline: 2px solid rgba(14, 124, 107, 0.35);
   outline-offset: 1px;
 }
@@ -582,6 +597,74 @@ input:focus {
 .empty {
   color: var(--ink-soft);
   padding: 1rem 0;
+}
+
+.history-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.75rem;
+}
+
+.btn-export {
+  padding: 0.45rem 0.85rem;
+  font-size: 0.88rem;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 600;
+}
+
+.btn-export:hover {
+  background: var(--accent-hover);
+}
+
+.btn-export:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.toast-host {
+  position: fixed;
+  right: 1.1rem;
+  bottom: 1.1rem;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  max-width: min(360px, calc(100vw - 2rem));
+  pointer-events: none;
+}
+
+.toast {
+  background: #0c1a24;
+  color: #f3f7fa;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  border-left: 4px solid var(--warn);
+  box-shadow: 0 12px 28px rgba(12, 26, 36, 0.28);
+  font-size: 0.92rem;
+  line-height: 1.35;
+  animation: toast-in 0.25s ease;
+}
+
+.toast-out {
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (max-width: 640px) {

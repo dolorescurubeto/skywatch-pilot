@@ -167,6 +167,21 @@ def test_alerts_history_empty_before_ack(client, pilot_token):
     assert r.get_json()["history"] == []
 
 
+def test_alerts_history_export_csv(client, pilot_token):
+    headers = auth_headers(pilot_token)
+    # Seed one history row via acknowledge
+    before = client.get("/api/v1/alerts", headers=headers).get_json()
+    alert_id = before["alerts"][0]["id"]
+    client.post(f"/api/v1/alerts/{alert_id}/acknowledge", headers=headers)
+
+    r = client.get("/api/v1/alerts/history/export", headers=headers)
+    assert r.status_code == 200
+    assert "text/csv" in r.content_type
+    text = r.get_data(as_text=True)
+    assert "acknowledged_at" in text
+    assert alert_id in text
+
+
 def test_acknowledge_unknown_alert_404(client, pilot_token):
     r = client.post(
         "/api/v1/alerts/alert_does_not_exist/acknowledge",

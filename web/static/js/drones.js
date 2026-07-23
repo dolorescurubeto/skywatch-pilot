@@ -78,6 +78,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("filter-alerts").addEventListener("change", () => {
     renderRows(cachedDrones);
   });
+  document.getElementById("filter-search").addEventListener("input", () => {
+    renderRows(cachedDrones);
+  });
 
   await loadDrones();
   setInterval(loadDrones, REFRESH_MS);

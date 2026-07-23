@@ -63,19 +63,26 @@ function batteryText(value) {
   return value === null || value === undefined ? "—" : `${value}%`;
 }
 
-/** Client-side fleet filters (status + has_alert). */
+/** Client-side fleet filters (status + has_alert + name search). */
 function readFleetFilters() {
   const statusEl = document.getElementById("filter-status");
   const alertsEl = document.getElementById("filter-alerts");
+  const searchEl = document.getElementById("filter-search");
   return {
     status: statusEl ? statusEl.value : "all",
     alerts: alertsEl ? alertsEl.value : "all",
+    search: searchEl ? searchEl.value.trim().toLowerCase() : "",
   };
 }
 
 function matchesFleetFilters(drone, filters = readFleetFilters()) {
   if (filters.status !== "all" && drone.status !== filters.status) return false;
   if (filters.alerts === "alert" && !drone.has_alert) return false;
+  if (filters.search) {
+    const name = (drone.name || "").toLowerCase();
+    const id = (drone.id || "").toLowerCase();
+    if (!name.includes(filters.search) && !id.includes(filters.search)) return false;
+  }
   return true;
 }
 
@@ -83,6 +90,60 @@ function updateFilterCount(shown, total) {
   const el = document.getElementById("filter-count");
   if (!el) return;
   el.textContent = `Showing ${shown} of ${total}`;
+}
+
+const SEEN_ALERTS_KEY = "skywatch_seen_alert_ids";
+
+function getSeenAlertIds() {
+  try {
+    return new Set(JSON.parse(sessionStorage.getItem(SEEN_ALERTS_KEY) || "[]"));
+  } catch (_) {
+    return new Set();
+  }
+}
+
+function setSeenAlertIds(ids) {
+  sessionStorage.setItem(SEEN_ALERTS_KEY, JSON.stringify([...ids]));
+}
+
+/** Floating toast for new alerts (demo / UX). */
+function showToast(message, opts = {}) {
+  let host = document.getElementById("toast-host");
+  if (!host) {
+    host = document.createElement("div");
+    host.id = "toast-host";
+    host.className = "toast-host";
+    host.setAttribute("data-testid", "toast-host");
+    document.body.appendChild(host);
+  }
+  const toast = document.createElement("div");
+  toast.className = "toast";
+  toast.setAttribute("data-testid", "alert-toast");
+  toast.setAttribute("role", "status");
+  toast.textContent = message;
+  host.appendChild(toast);
+  const ms = opts.durationMs || 4500;
+  setTimeout(() => {
+    toast.classList.add("toast-out");
+    setTimeout(() => toast.remove(), 280);
+  }, ms);
+}
+
+function notifyNewAlerts(alerts) {
+  const ids = (alerts || []).map((a) => a.id);
+  const seen = getSeenAlertIds();
+  if (seen.size === 0) {
+    // First load: remember current alerts, do not toast
+    setSeenAlertIds(ids);
+    return;
+  }
+  const newcomers = (alerts || []).filter((a) => !seen.has(a.id));
+  if (newcomers.length) {
+    const first = newcomers[0];
+    const extra = newcomers.length > 1 ? ` (+${newcomers.length - 1} more)` : "";
+    showToast(`New alert: ${first.message}${extra}`);
+  }
+  setSeenAlertIds(ids);
 }
 
 async function logout() {
@@ -95,16 +156,20 @@ async function logout() {
     }
   }
   clearSession();
+  sessionStorage.removeItem(SEEN_ALERTS_KEY);
   window.location.href = "/login";
 }
 
-/** Updates "Alerts (N)" badge in the top nav. */
+/** Updates "Alerts (N)" badge in the top nav + toast on new alerts. */
 async function updateAlertsNavBadge() {
   const el = document.querySelector("[data-testid='nav-alerts']");
   if (!el || !getToken()) return;
 
   const { ok, body } = await api("/api/v1/alerts");
   if (!ok) return;
+
+  const alerts = body.alerts || [];
+  notifyNewAlerts(alerts);
 
   const count = body.count || 0;
   const label = count > 0 ? `Alerts (${count})` : "Alerts";

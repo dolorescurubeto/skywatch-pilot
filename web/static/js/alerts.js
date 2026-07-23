@@ -12,8 +12,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   const historyEmpty = document.getElementById("history-empty");
   const viewActive = document.getElementById("view-active");
   const viewHistory = document.getElementById("view-history");
+  const exportBtn = document.getElementById("export-history-btn");
   const errorEl = document.getElementById("page-error");
   let currentView = "active";
+  let cachedHistory = [];
 
   function typeBadge(type) {
     if (type === "OFFLINE" || type === "GEOFENCE_BREACH") {
@@ -93,15 +95,18 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
     errorEl.textContent = "";
+    cachedHistory = body.history || [];
 
-    if (!body.history.length) {
+    if (!cachedHistory.length) {
       historyList.innerHTML = "";
       historyEmpty.hidden = false;
+      exportBtn.disabled = true;
       return;
     }
 
     historyEmpty.hidden = true;
-    historyList.innerHTML = body.history
+    exportBtn.disabled = false;
+    historyList.innerHTML = cachedHistory
       .map(
         (h) => `
       <li class="alert-item history-item" data-testid="history-item-${h.id}" data-alert-id="${h.id}">
@@ -118,6 +123,28 @@ document.addEventListener("DOMContentLoaded", async () => {
       </li>`
       )
       .join("");
+  }
+
+  async function exportHistoryCsv() {
+    errorEl.textContent = "";
+    const token = getToken();
+    const res = await fetch("/api/v1/alerts/history/export", {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) {
+      errorEl.textContent = "Could not export CSV.";
+      return;
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "alert-history.csv";
+    a.setAttribute("data-testid", "export-history-download");
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
   }
 
   async function refresh() {
@@ -139,6 +166,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     });
   });
+
+  exportBtn.addEventListener("click", exportHistoryCsv);
 
   await updateAlertsNavBadge();
   await loadActive();

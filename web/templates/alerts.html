@@ -60,6 +60,11 @@
         </div>
 
         <div id="view-history" data-testid="view-history" hidden>
+          <div class="history-toolbar">
+            <button type="button" class="btn btn-export" id="export-history-btn" data-testid="export-history-btn">
+              Export CSV
+            </button>
+          </div>
           <ul class="alert-list" id="history-list" data-testid="history-list"></ul>
           <p class="empty" id="history-empty" hidden data-testid="history-empty">
             No acknowledged alerts yet.

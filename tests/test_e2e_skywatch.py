@@ -222,6 +222,88 @@ def test_filter_status_flying_on_list(skywatch_server, page):
 
 
 @pytest.mark.e2e
+def test_filter_status_offline_on_list(skywatch_server, page):
+    """PRACTICE B: Offline on list → only Charlie."""
+    import urllib.request
+
+    req = urllib.request.Request(f"{skywatch_server}/api/v1/admin/reset-seed", method="POST")
+    urllib.request.urlopen(req, timeout=3)
+
+    _login(page, skywatch_server)
+    page.get_by_test_id("filter-bar").wait_for(state="visible")
+    page.get_by_test_id("filter-status").select_option("offline")
+
+    assert page.get_by_test_id("drone-row-drn_03").is_visible()
+    assert page.get_by_test_id("drone-row-drn_01").count() == 0
+    assert page.get_by_test_id("drone-row-drn_02").count() == 0
+    assert "Showing 1 of 3" in page.get_by_test_id("filter-count").inner_text()
+
+
+@pytest.mark.e2e
+def test_filter_status_offline_on_map(skywatch_server, page):
+    """PRACTICE C: Offline on map → only Charlie marker."""
+    import urllib.request
+
+    req = urllib.request.Request(f"{skywatch_server}/api/v1/admin/reset-seed", method="POST")
+    urllib.request.urlopen(req, timeout=3)
+
+    _login(page, skywatch_server)
+    page.get_by_test_id("nav-map").click()
+    page.wait_for_url("**/map")
+    page.get_by_test_id("filter-status").select_option("offline")
+
+    assert page.get_by_test_id("marker-drn_03").is_visible()
+    assert page.get_by_test_id("marker-drn_01").count() == 0
+    assert page.get_by_test_id("marker-drn_02").count() == 0
+    assert "Showing 1 of 3" in page.get_by_test_id("filter-count").inner_text()
+
+
+@pytest.mark.e2e
+def test_charlie_marker_opens_detail(skywatch_server, page):
+    """PRACTICE D: map → click Charlie → Open detail → see Charlie."""
+    import urllib.request
+
+    req = urllib.request.Request(f"{skywatch_server}/api/v1/admin/reset-seed", method="POST")
+    urllib.request.urlopen(req, timeout=3)
+
+    _login(page, skywatch_server)
+    page.get_by_test_id("nav-map").click()
+    page.wait_for_url("**/map")
+
+    # Click en el marcador (igual idea que .click() en JS)
+    page.get_by_test_id("marker-drn_03").wait_for(state="visible", timeout=10000)
+    page.get_by_test_id("marker-drn_03").click()
+
+    # Click en el link del popup
+    page.get_by_role("link", name="Open detail →").click()
+
+    page.wait_for_url("**/drones/drn_03")
+    page.get_by_test_id("drone-detail").wait_for(state="visible")
+    page.locator("#drone-name").filter(has_text="Charlie").wait_for(timeout=10000)
+    assert "Charlie" in page.locator("#drone-name").inner_text()
+
+
+@pytest.mark.e2e
+def test_charlie_row_opens_detail(skywatch_server, page):
+    """PRACTICE E: My drones → click Charlie row → detail."""
+    import urllib.request
+
+    req = urllib.request.Request(f"{skywatch_server}/api/v1/admin/reset-seed", method="POST")
+    urllib.request.urlopen(req, timeout=3)
+
+    _login(page, skywatch_server)
+
+    # Click en la fila de la tabla (también es .click())
+    page.get_by_test_id("drone-row-drn_03").click()
+
+    # Completá vos (igual idea que Practice D, pero sin mapa):
+    # 1) wait_for_url **/drones/drn_03
+    # 2) drone-detail visible
+    # 3) assert "Charlie" in #drone-name
+    raise NotImplementedError("Completá URL + asserts de Charlie")
+
+
+@pytest.mark.e2e
 def test_filter_alerts_only_on_list(skywatch_server, page):
     import urllib.request
 
@@ -292,3 +374,42 @@ def test_profile_page_shows_pilot_info(skywatch_server, page):
     assert page.get_by_test_id("profile-license").inner_text()
     assert page.get_by_test_id("profile-last-login").inner_text() != "—"
     assert int(page.locator("#fleet-total").inner_text()) == 3
+
+
+@pytest.mark.e2e
+def test_search_filters_drone_by_name(skywatch_server, page):
+    import urllib.request
+
+    req = urllib.request.Request(f"{skywatch_server}/api/v1/admin/reset-seed", method="POST")
+    urllib.request.urlopen(req, timeout=3)
+
+    _login(page, skywatch_server)
+    page.get_by_test_id("filter-search").fill("alpha")
+
+    assert page.get_by_test_id("drone-row-drn_01").is_visible()
+    assert page.get_by_test_id("drone-row-drn_02").count() == 0
+    assert page.get_by_test_id("drone-row-drn_03").count() == 0
+    assert "Showing 1 of 3" in page.get_by_test_id("filter-count").inner_text()
+
+
+@pytest.mark.e2e
+def test_export_history_csv_button(skywatch_server, page):
+    import urllib.request
+
+    req = urllib.request.Request(f"{skywatch_server}/api/v1/admin/reset-seed", method="POST")
+    urllib.request.urlopen(req, timeout=3)
+
+    _login(page, skywatch_server)
+    page.get_by_test_id("nav-alerts").click()
+    page.wait_for_url("**/alerts")
+    page.get_by_test_id("ack-alert_drn_02_battery").click()
+    page.get_by_test_id("alert-item-alert_drn_02_battery").wait_for(state="hidden", timeout=10000)
+
+    page.get_by_test_id("tab-history").click()
+    page.get_by_test_id("view-history").wait_for(state="visible")
+    page.get_by_test_id("history-item-alert_drn_02_battery").wait_for(state="visible")
+
+    with page.expect_download() as download_info:
+        page.get_by_test_id("export-history-btn").click()
+    download = download_info.value
+    assert download.suggested_filename.endswith(".csv")
