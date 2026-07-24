@@ -293,14 +293,58 @@ def test_charlie_row_opens_detail(skywatch_server, page):
 
     _login(page, skywatch_server)
 
-    # Click en la fila de la tabla (también es .click())
     page.get_by_test_id("drone-row-drn_03").click()
 
-    # Completá vos (igual idea que Practice D, pero sin mapa):
-    # 1) wait_for_url **/drones/drn_03
-    # 2) drone-detail visible
-    # 3) assert "Charlie" in #drone-name
-    raise NotImplementedError("Completá URL + asserts de Charlie")
+    page.wait_for_url("**/drones/drn_03")
+    page.get_by_test_id("drone-detail").wait_for(state="visible")
+    page.locator("#drone-name").filter(has_text="Charlie").wait_for(timeout=10000)
+    assert "Charlie" in page.locator("#drone-name").inner_text()
+
+
+@pytest.mark.e2e
+def test_search_filters_charlie(skywatch_server, page):
+    """PRACTICE F: type in Search → only Charlie row."""
+    import urllib.request
+
+    req = urllib.request.Request(f"{skywatch_server}/api/v1/admin/reset-seed", method="POST")
+    urllib.request.urlopen(req, timeout=3)
+
+    _login(page, skywatch_server)
+
+    page.get_by_test_id("filter-search").fill("charlie")
+
+    assert page.get_by_test_id("drone-row-drn_03").is_visible()
+    assert page.get_by_test_id("drone-row-drn_01").count() == 0
+    assert page.get_by_test_id("drone-row-drn_02").count() == 0
+    assert "Showing 1 of 3" in page.get_by_test_id("filter-count").inner_text()
+
+
+@pytest.mark.e2e
+def test_ack_charlie_offline_goes_to_history(skywatch_server, page):
+    """PRACTICE G: Alerts → Acknowledge Charlie OFFLINE → History."""
+    import urllib.request
+
+    req = urllib.request.Request(f"{skywatch_server}/api/v1/admin/reset-seed", method="POST")
+    urllib.request.urlopen(req, timeout=3)
+
+    _login(page, skywatch_server)
+    page.get_by_test_id("nav-alerts").click()
+    page.wait_for_url("**/alerts")
+
+    # Esperar la alerta OFFLINE de Charlie y acknowledgearla
+    offline = page.get_by_test_id("alert-item-alert_drn_03_offline")
+    offline.wait_for(state="visible")
+    page.get_by_test_id("ack-alert_drn_03_offline").click()
+    offline.wait_for(state="hidden", timeout=10000)
+
+    # Completá vos:
+    # 1) click en tab-history
+    # 2) wait view-history visible
+    # 3) history-item-alert_drn_03_offline visible
+    # Pista: mirá test_acknowledge_removes_alert_from_ui (usa Bravo / battery)
+    page.get_by_test_id("tab-history").click()
+    page.get_by_test_id("view-history").wait_for(state="visible")
+    page.get_by_test_id("history-item-alert_drn_03_offline").wait_for(state="visible")
 
 
 @pytest.mark.e2e
