@@ -331,20 +331,38 @@ def test_ack_charlie_offline_goes_to_history(skywatch_server, page):
     page.get_by_test_id("nav-alerts").click()
     page.wait_for_url("**/alerts")
 
-    # Esperar la alerta OFFLINE de Charlie y acknowledgearla
     offline = page.get_by_test_id("alert-item-alert_drn_03_offline")
     offline.wait_for(state="visible")
     page.get_by_test_id("ack-alert_drn_03_offline").click()
     offline.wait_for(state="hidden", timeout=10000)
 
-    # Completá vos:
-    # 1) click en tab-history
-    # 2) wait view-history visible
-    # 3) history-item-alert_drn_03_offline visible
-    # Pista: mirá test_acknowledge_removes_alert_from_ui (usa Bravo / battery)
     page.get_by_test_id("tab-history").click()
     page.get_by_test_id("view-history").wait_for(state="visible")
     page.get_by_test_id("history-item-alert_drn_03_offline").wait_for(state="visible")
+
+
+@pytest.mark.e2e
+def test_profile_shows_demo_pilot(skywatch_server, page):
+    """PRACTICE H: click Demo Pilot → profile name + email."""
+    import urllib.request
+
+    req = urllib.request.Request(f"{skywatch_server}/api/v1/admin/reset-seed", method="POST")
+    urllib.request.urlopen(req, timeout=3)
+
+    _login(page, skywatch_server)
+
+    # Click en el nombre del piloto (nav)
+    page.get_by_test_id("nav-profile").click()
+    page.wait_for_url("**/profile")
+
+    # Completá vos:
+    # 1) pilot-profile visible
+    # 2) #profile-name contiene "Demo Pilot"
+    # 3) profile-email == "pilot@demo.com"
+    # Pista: mirá test_profile_page_shows_pilot_info
+    page.get_by_test_id("pilot-profile").wait_for(state="visible")
+    assert "Demo Pilot" in page.locator("#profile-name").inner_text()
+    assert page.get_by_test_id("profile-email").inner_text() == "pilot@demo.com"
 
 
 @pytest.mark.e2e
