@@ -492,3 +492,26 @@ def test_change_bravo_status_to_flying(skywatch_server, page):
     page.get_by_test_id("status-flying").click()
     page.get_by_test_id("detail-status").filter(has_text="flying").wait_for(timeout=10000)
     assert page.get_by_test_id("detail-status").inner_text() == "flying"
+
+
+@pytest.mark.e2e
+def test_change_alpha_status_to_idle(skywatch_server, page):
+    """PRACTICE I: Alpha detail → Set idle → status becomes idle."""
+    import urllib.request
+
+    req = urllib.request.Request(f"{skywatch_server}/api/v1/admin/reset-seed", method="POST")
+    urllib.request.urlopen(req, timeout=3)
+
+    _login(page, skywatch_server)
+
+    # Abrir detalle de Alpha (en seed suele estar flying)
+    page.get_by_test_id("drone-row-drn_01").click()
+    page.wait_for_url("**/drones/drn_01")
+    page.get_by_test_id("drone-detail").wait_for(state="visible")
+    page.get_by_test_id("detail-status").wait_for(state="visible")
+
+    assert page.get_by_test_id("detail-status").inner_text() == "flying"
+
+    page.get_by_test_id("status-idle").click()
+    page.get_by_test_id("detail-status").filter(has_text="idle").wait_for(timeout=10000)
+    assert page.get_by_test_id("detail-status").inner_text() == "idle"
