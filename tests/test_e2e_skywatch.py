@@ -360,9 +360,7 @@ def test_profile_shows_demo_pilot(skywatch_server, page):
     # 2) #profile-name contiene "Demo Pilot"
     # 3) profile-email == "pilot@demo.com"
     # Pista: mirá test_profile_page_shows_pilot_info
-    page.get_by_test_id("pilot-profile").wait_for(state="visible")
-    assert "Demo Pilot" in page.locator("#profile-name").inner_text()
-    assert page.get_by_test_id("profile-email").inner_text() == "pilot@demo.com"
+    raise NotImplementedError("Completá asserts del profile")
 
 
 @pytest.mark.e2e
@@ -475,3 +473,22 @@ def test_export_history_csv_button(skywatch_server, page):
         page.get_by_test_id("export-history-btn").click()
     download = download_info.value
     assert download.suggested_filename.endswith(".csv")
+
+
+@pytest.mark.e2e
+def test_change_bravo_status_to_flying(skywatch_server, page):
+    import urllib.request
+
+    req = urllib.request.Request(f"{skywatch_server}/api/v1/admin/reset-seed", method="POST")
+    urllib.request.urlopen(req, timeout=3)
+
+    _login(page, skywatch_server)
+    page.get_by_test_id("drone-row-drn_02").click()
+    page.wait_for_url("**/drones/drn_02")
+    page.get_by_test_id("drone-detail").wait_for(state="visible")
+    page.get_by_test_id("detail-status").wait_for(state="visible")
+    assert page.get_by_test_id("detail-status").inner_text() == "idle"
+
+    page.get_by_test_id("status-flying").click()
+    page.get_by_test_id("detail-status").filter(has_text="flying").wait_for(timeout=10000)
+    assert page.get_by_test_id("detail-status").inner_text() == "flying"

@@ -76,6 +76,7 @@ try { Invoke-WebRequest http://127.0.0.1:8080/api/v1/drones } catch { $_.Excepti
 | GET | `/api/v1/me` | Yes |
 | GET | `/api/v1/drones` | Yes |
 | GET | `/api/v1/drones/{id}` | Yes |
+| PATCH | `/api/v1/drones/{id}/status` | Yes |
 | GET | `/api/v1/alerts` | Yes |
 | GET | `/api/v1/alerts/history` | Yes |
 | GET | `/api/v1/alerts/history/export` | Yes |
@@ -124,6 +125,8 @@ Flow: Login → My drones → **Map** → Detail → Alerts → Acknowledge → 
 **Alerts:** tabs **Active** / **History**. History has **Export CSV**. New alerts show a **toast** notification while you browse.
 
 **Profile:** click your name in the nav → `/profile` (email, license, home base, last login, fleet summary).
+
+**Status control:** on drone detail, **Set idle** / **Set flying** (manual status change).
 
 ## Tests
 

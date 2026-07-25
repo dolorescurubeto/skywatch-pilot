@@ -285,3 +285,52 @@ def get_drone(drone_id: str) -> dict | None:
         if d["id"] == drone_id:
             return deepcopy(d)
     return None
+
+
+ALLOWED_MANUAL_STATUSES = frozenset({"idle", "flying"})
+
+
+def update_drone_status(drone_id: str, pilot_id: str, new_status: str) -> dict | None:
+    """
+    Pilot changes drone status to idle or flying.
+    Returns updated drone, or None if not found / not owned.
+    Raises ValueError for invalid status.
+    """
+    if new_status not in ALLOWED_MANUAL_STATUSES:
+        raise ValueError("status must be idle or flying")
+
+    drones = load_drones()
+    for d in drones:
+        if d["id"] != drone_id:
+            continue
+        if d["pilot_id"] != pilot_id:
+            return None
+
+        now = utc_now()
+        d["status"] = new_status
+        d["last_seen"] = to_iso(now)
+
+        if new_status == "flying":
+            if not d.get("altitude_m") or d.get("altitude_m") == 0:
+                d["altitude_m"] = 40.0
+            if d.get("battery_percent") is None:
+                d["battery_percent"] = 50
+        else:
+            d["altitude_m"] = 0.0
+
+        history = d.get("history") or []
+        history.append(
+            {
+                "ts": to_iso(now),
+                "battery_percent": d.get("battery_percent"),
+                "status": new_status,
+                "altitude_m": d.get("altitude_m"),
+                "lat": d.get("lat"),
+                "lon": d.get("lon"),
+            }
+        )
+        d["history"] = history[-10:]
+        save_drones(drones)
+        return deepcopy(d)
+
+    return None

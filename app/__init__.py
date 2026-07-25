@@ -23,6 +23,7 @@ from app.store import (
     public_profile,
     record_login,
     reset_drones_from_seed,
+    update_drone_status,
 )
 from simulator.telemetry import start_simulator
 
@@ -160,6 +161,27 @@ def drone_detail(drone_id: str):
     drone["alerts"] = alerts
     drone["has_alert"] = len(alerts) > 0
     return jsonify(drone)
+
+
+@app.patch("/api/v1/drones/<drone_id>/status")
+@require_auth
+def patch_drone_status(drone_id: str):
+    body = request.get_json(silent=True) or {}
+    new_status = (body.get("status") or "").strip().lower()
+    pilot_id = g.current_user["pilot_id"]
+
+    try:
+        updated = update_drone_status(drone_id, pilot_id, new_status)
+    except ValueError as exc:
+        return jsonify({"error": "validation_error", "message": str(exc)}), 400
+
+    if updated is None:
+        existing = get_drone(drone_id)
+        if not existing:
+            return jsonify({"error": "not_found", "message": "Drone not found"}), 404
+        return jsonify({"error": "forbidden", "message": "Not your drone"}), 403
+
+    return jsonify({"ok": True, "drone": updated})
 
 
 @app.get("/api/v1/alerts")

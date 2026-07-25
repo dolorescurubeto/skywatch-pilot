@@ -144,6 +144,52 @@ a {
   margin: 1.5rem 0 0.85rem;
 }
 
+.status-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem 0.75rem;
+  margin: 0.85rem 0 1.1rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.status-controls-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin-right: 0.25rem;
+}
+
+.btn-status {
+  padding: 0.45rem 0.85rem;
+  font-size: 0.88rem;
+  font-family: inherit;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.btn-status:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.btn-status.active-status,
+.btn-status:disabled {
+  background: rgba(14, 124, 107, 0.12);
+  border-color: var(--accent);
+  color: var(--accent);
+  cursor: default;
+}
+
 .panel {
   background: var(--card);
   backdrop-filter: blur(12px);

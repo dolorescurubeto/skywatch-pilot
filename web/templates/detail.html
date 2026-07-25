@@ -29,6 +29,17 @@
         <a class="btn-ghost" href="/drones" data-testid="back-link">← Back</a>
         <h2 class="page-title" id="drone-name">—</h2>
         <p class="page-sub" id="drone-id"></p>
+
+        <div class="status-controls" data-testid="status-controls">
+          <span class="status-controls-label">Change status</span>
+          <button type="button" class="btn btn-status" data-status="idle" data-testid="status-idle">
+            Set idle
+          </button>
+          <button type="button" class="btn btn-status" data-status="flying" data-testid="status-flying">
+            Set flying
+          </button>
+        </div>
+
         <div class="meta-grid" id="meta-grid"></div>
         <div class="history">
           <h3>Recent readings</h3>

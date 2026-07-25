@@ -89,6 +89,41 @@ def test_drone_detail_forbidden_other_pilot(client, pilot_token):
     assert r.get_json()["error"] == "forbidden"
 
 
+def test_patch_drone_status_idle_to_flying(client, pilot_token):
+    headers = auth_headers(pilot_token)
+    r = client.patch(
+        "/api/v1/drones/drn_02/status",
+        headers=headers,
+        json={"status": "flying"},
+    )
+    assert r.status_code == 200
+    body = r.get_json()
+    assert body["ok"] is True
+    assert body["drone"]["status"] == "flying"
+    assert body["drone"]["altitude_m"] > 0
+
+    detail = client.get("/api/v1/drones/drn_02", headers=headers).get_json()
+    assert detail["status"] == "flying"
+
+
+def test_patch_drone_status_invalid(client, pilot_token):
+    r = client.patch(
+        "/api/v1/drones/drn_01/status",
+        headers=auth_headers(pilot_token),
+        json={"status": "offline"},
+    )
+    assert r.status_code == 400
+
+
+def test_patch_drone_status_forbidden(client, pilot_token):
+    r = client.patch(
+        "/api/v1/drones/drn_10/status",
+        headers=auth_headers(pilot_token),
+        json={"status": "idle"},
+    )
+    assert r.status_code == 403
+
+
 def test_alerts_include_low_battery_and_offline(client, pilot_token):
     r = client.get("/api/v1/alerts", headers=auth_headers(pilot_token))
     assert r.status_code == 200
