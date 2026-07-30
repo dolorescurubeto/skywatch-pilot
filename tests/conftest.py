@@ -16,14 +16,24 @@ sys.path.insert(0, str(ROOT))
 
 pytest_plugins = ("pytest_playwright",)
 
-from app import create_app  # noqa: E402
-from app.store import reset_drones_from_seed  # noqa: E402
-
 
 @pytest.fixture()
-def client():
-    """Fresh Flask test client; simulator off; drones reset to seed."""
-    reset_drones_from_seed()
+def client(tmp_path, monkeypatch):
+    """Fresh Flask test client; isolated SQLite DB; simulator off; drones reset."""
+    db_path = tmp_path / "test.db"
+    monkeypatch.setenv("DATABASE_URL", f"sqlite:///{db_path.as_posix()}")
+    monkeypatch.setenv("SKYWATCH_RESET_ON_START", "1")
+    monkeypatch.setenv("SKYWATCH_SIM", "0")
+    # Keep seed JSON from repo data/
+    monkeypatch.delenv("SKYWATCH_DATA_DIR", raising=False)
+
+    from app.db import reset_engine
+    from app import create_app
+    from app.store import bootstrap_database
+
+    reset_engine()
+    bootstrap_database(force_reset_drones=True, reset_eng=True)
+
     app = create_app(start_sim=False)
     app.config["TESTING"] = True
     with app.test_client() as c:

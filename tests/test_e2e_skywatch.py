@@ -15,18 +15,21 @@ BASE_URL = f"http://127.0.0.1:{E2E_PORT}"
 
 @pytest.fixture(scope="module")
 def skywatch_server(tmp_path_factory):
-    """Start Flask app on 8081 with isolated data dir (no clash with manual 8080)."""
+    """Start Flask app on 8081 with isolated SQLite DB (no clash with manual 8080)."""
     import shutil
 
     data_src = ROOT / "data"
     data_dir = tmp_path_factory.mktemp("skywatch-e2e-data")
     shutil.copy(data_src / "users.json", data_dir / "users.json")
     shutil.copy(data_src / "drones_seed.json", data_dir / "drones_seed.json")
+    db_path = data_dir / "e2e.db"
 
     env = os.environ.copy()
     env["SKYWATCH_PORT"] = str(E2E_PORT)
     env["SKYWATCH_SIM"] = "0"
     env["SKYWATCH_DATA_DIR"] = str(data_dir)
+    env["DATABASE_URL"] = f"sqlite:///{db_path.as_posix()}"
+    env["SKYWATCH_RESET_ON_START"] = "1"
     env["PLAYWRIGHT_BROWSERS_PATH"] = str(Path.home() / "AppData" / "Local" / "ms-playwright")
 
     proc = subprocess.Popen(
@@ -49,13 +52,21 @@ def skywatch_server(tmp_path_factory):
         proc.kill()
         pytest.fail(f"SkyWatch server did not start on port {E2E_PORT}")
 
-    try:
-        import urllib.request
+    import urllib.request
 
-        req = urllib.request.Request(f"{BASE_URL}/api/v1/admin/reset-seed", method="POST")
-        urllib.request.urlopen(req, timeout=3)
-    except OSError:
-        pass
+    seeded = False
+    for _ in range(10):
+        try:
+            req = urllib.request.Request(f"{BASE_URL}/api/v1/admin/reset-seed", method="POST")
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                if resp.status == 200:
+                    seeded = True
+                    break
+        except OSError:
+            time.sleep(0.4)
+    if not seeded:
+        proc.kill()
+        pytest.fail("Could not reset seed before E2E tests")
 
     yield BASE_URL
     proc.terminate()
@@ -77,7 +88,7 @@ def _login(page, base_url: str):
 def test_login_opens_drones_page(skywatch_server, page):
     _login(page, skywatch_server)
     assert page.get_by_test_id("drones-table").is_visible()
-    assert page.get_by_test_id("drone-row-drn_01").is_visible()
+    page.get_by_test_id("drone-row-drn_01").wait_for(state="visible", timeout=10000)
 
 
 @pytest.mark.e2e

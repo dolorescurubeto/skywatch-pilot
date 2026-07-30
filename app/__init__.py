@@ -246,10 +246,23 @@ def reset_seed():
 
 
 def create_app(start_sim: bool = True) -> Flask:
-    reset_drones_from_seed()
+    import os
+
+    from app.store import bootstrap_database
+
+    force = os.environ.get("SKYWATCH_RESET_ON_START", "0") == "1"
+    bootstrap_database(force_reset_drones=force, reset_eng=force)
     if start_sim:
         start_simulator(interval_sec=15.0)
     return app
+
+
+def create_gunicorn_app():
+    """Entry for gunicorn / Render."""
+    import os
+
+    start_sim = os.environ.get("SKYWATCH_SIM", "1") != "0"
+    return create_app(start_sim=start_sim)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,18 @@
+# Optional deploy on Render free web service — NO paid database required.
+# Uses SQLite on disk (ephemeral on free tier; fine for demo).
+# Dashboard: New → Blueprint → connect this repo
+# Or: New Web Service → Python → build/start below.
+services:
+  - type: web
+    name: skywatch-pilot
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn "app:create_gunicorn_app()" --bind 0.0.0.0:$PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.0"
+      - key: SKYWATCH_SIM
+        value: "1"
+      - key: SKYWATCH_RESET_ON_START
+        value: "1"

@@ -102,11 +102,29 @@ skywatch-pilot/
   README.md
 ```
 
-## Web UI (Phase 3)
+## Database (SaaS Phase 1 — local, free)
+
+SkyWatch uses **SQLAlchemy**. On your PC it stores data in SQLite at `data/skywatch.db` — **no cloud account, no payment**.
+
+| Env var | Purpose |
+|---------|---------|
+| `DATABASE_URL` | Optional. Default = local SQLite (`data/skywatch.db`). |
+| `SKYWATCH_RESET_ON_START=1` | Reseed drones on boot (tests / fresh demo). Leave `0` for normal local use. |
+| `SKYWATCH_SIM=0` | Disable telemetry simulator |
+| `SKYWATCH_DATA_DIR` | Folder with seed JSON (`users.json`, `drones_seed.json`) |
+
+Seed JSON files bootstrap the DB the first time (or after `POST /api/v1/admin/reset-seed`).
+
+### Optional deploy (still free)
+
+`Procfile` + `render.yaml` start the app with **gunicorn** and **SQLite** (no paid Postgres). On Render’s free web tier the disk is ephemeral — fine for demos; your day-to-day work stays on local SQLite.
+
+## Web UI (local)
 
 ```powershell
 cd C:\Users\dell\skywatch-pilot
 .\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
 python -m app
 ```
 
@@ -136,7 +154,7 @@ Flow: Login → My drones → **Map** → Detail → Alerts → Acknowledge → 
 pytest tests\ -v
 ```
 
-Expected: **19 passed** (e2e excluded).
+Expected: API + unit tests pass (e2e excluded by default via `-m "not e2e"` if needed).
 
 **E2E Playwright (Phase 4) — one-time setup:**
 
@@ -153,7 +171,7 @@ pytest tests\test_e2e_skywatch.py -m e2e -v
 
 Starts the app on port **8081** automatically (so it does not conflict with your manual server on 8080).
 
-## Next phases
+## Product phases
 
 | Phase | Status |
 |-------|--------|
@@ -162,6 +180,8 @@ Starts the app on port **8081** automatically (so it does not conflict with your
 | 3 Web UI | **Done** |
 | 4 Playwright E2E | **Done** |
 | 5 CI (GitHub Actions) | **Done** — see `CI.md` and `.github/workflows/ci.yml` |
+| SaaS 1 — DB persistence (SQLite local) | **Done** (this machine; no payment) |
+| SaaS 2 — real auth / tenants | Later |
 
 ## Spec
 

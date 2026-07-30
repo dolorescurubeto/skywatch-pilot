@@ -1,5 +1,6 @@
 data/drones_state.json
 data/acknowledged_alerts.json
+data/*.db
 venv/
 __pycache__/
 *.pyc
