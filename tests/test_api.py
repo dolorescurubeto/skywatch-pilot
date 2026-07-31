@@ -225,6 +225,48 @@ def test_acknowledge_unknown_alert_404(client, pilot_token):
     assert r.status_code == 404
 
 
+def test_acknowledge_twice_returns_404(client, pilot_token):
+    """Second acknowledge of the same alert is not found (already history)."""
+    headers = auth_headers(pilot_token)
+    before = client.get("/api/v1/alerts", headers=headers).get_json()
+    alert_id = before["alerts"][0]["id"]
+
+    first = client.post(f"/api/v1/alerts/{alert_id}/acknowledge", headers=headers)
+    assert first.status_code == 200
+
+    second = client.post(f"/api/v1/alerts/{alert_id}/acknowledge", headers=headers)
+    assert second.status_code == 404
+    assert second.get_json()["error"] == "not_found"
+
+
+def test_export_history_csv_empty_still_has_header(client, pilot_token):
+    """CSV export with no history still returns header row."""
+    r = client.get(
+        "/api/v1/alerts/history/export",
+        headers=auth_headers(pilot_token),
+    )
+    assert r.status_code == 200
+    assert "text/csv" in r.content_type
+    text = r.get_data(as_text=True)
+    lines = [ln for ln in text.strip().splitlines() if ln]
+    assert len(lines) == 1
+    assert "acknowledged_at" in lines[0]
+    assert "drone_id" in lines[0]
+
+
+def test_pilot2_list_excludes_pilot1_drones(client, pilot2_token):
+    """pilot_002 only sees their own fleet (drn_10), not pilot_001 drones."""
+    r = client.get("/api/v1/drones", headers=auth_headers(pilot2_token))
+    assert r.status_code == 200
+    body = r.get_json()
+    ids = {d["id"] for d in body["drones"]}
+    assert "drn_10" in ids
+    assert "drn_01" not in ids
+    assert "drn_02" not in ids
+    assert "drn_03" not in ids
+    assert body["count"] == len(ids)
+
+
 def test_acknowledge_requires_auth(client):
     r = client.post("/api/v1/alerts/alert_drn_02_battery/acknowledge")
     assert r.status_code == 401

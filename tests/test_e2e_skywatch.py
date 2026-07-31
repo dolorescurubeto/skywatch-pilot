@@ -526,3 +526,92 @@ def test_change_alpha_status_to_idle(skywatch_server, page):
     page.get_by_test_id("status-idle").click()
     page.get_by_test_id("detail-status").filter(has_text="idle").wait_for(timeout=10000)
     assert page.get_by_test_id("detail-status").inner_text() == "idle"
+
+
+@pytest.mark.e2e
+def test_logout_returns_to_login(skywatch_server, page):
+    """Log out clears session and lands on login."""
+    import urllib.request
+
+    req = urllib.request.Request(f"{skywatch_server}/api/v1/admin/reset-seed", method="POST")
+    urllib.request.urlopen(req, timeout=3)
+
+    _login(page, skywatch_server)
+    page.get_by_test_id("drones-table").wait_for(state="visible")
+    page.get_by_test_id("logout-btn").click()
+    page.wait_for_url("**/login")
+    page.get_by_test_id("login-form").wait_for(state="visible")
+
+
+@pytest.mark.e2e
+def test_search_no_match_shows_empty(skywatch_server, page):
+    """Search with no hits shows empty filter row."""
+    import urllib.request
+
+    req = urllib.request.Request(f"{skywatch_server}/api/v1/admin/reset-seed", method="POST")
+    urllib.request.urlopen(req, timeout=3)
+
+    _login(page, skywatch_server)
+    page.get_by_test_id("filter-search").fill("zzzz-no-drone")
+    page.get_by_test_id("filter-empty").wait_for(state="visible", timeout=10000)
+    assert page.get_by_test_id("drone-row-drn_01").count() == 0
+    assert "Showing 0 of 3" in page.get_by_test_id("filter-count").inner_text()
+
+
+@pytest.mark.e2e
+def test_clear_search_restores_all_drones(skywatch_server, page):
+    """Clearing search brings the full fleet back."""
+    import urllib.request
+
+    req = urllib.request.Request(f"{skywatch_server}/api/v1/admin/reset-seed", method="POST")
+    urllib.request.urlopen(req, timeout=3)
+
+    _login(page, skywatch_server)
+    search = page.get_by_test_id("filter-search")
+    search.fill("charlie")
+    page.get_by_test_id("drone-row-drn_03").wait_for(state="visible")
+    assert page.get_by_test_id("drone-row-drn_01").count() == 0
+
+    search.fill("")
+    page.get_by_test_id("drone-row-drn_01").wait_for(state="visible", timeout=10000)
+    assert page.get_by_test_id("drone-row-drn_02").is_visible()
+    assert page.get_by_test_id("drone-row-drn_03").is_visible()
+    assert "Showing 3 of 3" in page.get_by_test_id("filter-count").inner_text()
+
+
+@pytest.mark.e2e
+def test_history_empty_before_any_ack(skywatch_server, page):
+    """History tab shows empty state when nothing was acknowledged."""
+    import urllib.request
+
+    req = urllib.request.Request(f"{skywatch_server}/api/v1/admin/reset-seed", method="POST")
+    urllib.request.urlopen(req, timeout=3)
+
+    _login(page, skywatch_server)
+    page.get_by_test_id("nav-alerts").click()
+    page.wait_for_url("**/alerts")
+    page.get_by_test_id("alert-item-alert_drn_02_battery").wait_for(state="visible", timeout=10000)
+
+    page.get_by_test_id("tab-history").click()
+    page.get_by_test_id("view-history").wait_for(state="visible")
+    page.get_by_test_id("history-empty").wait_for(state="visible")
+    assert page.get_by_test_id("history-list").locator("li").count() == 0
+
+
+@pytest.mark.e2e
+def test_nav_map_and_back_to_drones(skywatch_server, page):
+    """Nav: drones → map → drones keeps session."""
+    import urllib.request
+
+    req = urllib.request.Request(f"{skywatch_server}/api/v1/admin/reset-seed", method="POST")
+    urllib.request.urlopen(req, timeout=3)
+
+    _login(page, skywatch_server)
+    page.get_by_test_id("nav-map").click()
+    page.wait_for_url("**/map")
+    page.get_by_test_id("fleet-map").wait_for(state="visible")
+    page.get_by_test_id("marker-drn_01").wait_for(state="visible", timeout=10000)
+
+    page.get_by_test_id("nav-drones").click()
+    page.wait_for_url("**/drones")
+    page.get_by_test_id("drone-row-drn_01").wait_for(state="visible", timeout=10000)
