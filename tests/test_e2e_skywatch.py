@@ -147,6 +147,24 @@ def test_acknowledge_removes_alert_from_ui(skywatch_server, page):
     page.get_by_test_id("history-item-alert_drn_02_battery").wait_for(state="visible")
     assert page.get_by_test_id("history-acked-label").first.is_visible()
 
+@pytest.mark.e2e
+def test_acknowledge_all_alerts_shows_empty(skywatch_server, page):
+    import urllib.request
+    req = urllib.request.Request(f"{skywatch_server}/api/v1/admin/reset-seed", method="POST")
+    urllib.request.urlopen(req, timeout=3)
+    _login(page, skywatch_server)
+    page.get_by_test_id("nav-alerts").click()
+    page.wait_for_url("**/alerts")
+    for alert_id in (
+        "alert_drn_02_battery",
+        "alert_drn_03_offline",
+        "alert_drn_03_geofence",
+    ):
+        item = page.get_by_test_id(f"alert-item-{alert_id}")
+        item.wait_for(state="visible", timeout=10000)
+        page.get_by_test_id(f"ack-{alert_id}").click()
+        item.wait_for(state="hidden", timeout=10000)
+    page.get_by_test_id("alerts-empty").wait_for(state="visible", timeout=10000)
 
 @pytest.mark.e2e
 def test_login_wrong_password_shows_error(skywatch_server, page):
@@ -225,6 +243,23 @@ def test_filter_status_flying_on_list(skywatch_server, page):
     _login(page, skywatch_server)
     page.get_by_test_id("filter-bar").wait_for(state="visible")
     page.get_by_test_id("filter-status").select_option("flying")
+
+    assert page.get_by_test_id("drone-row-drn_01").is_visible()
+    assert page.get_by_test_id("drone-row-drn_02").count() == 0
+    assert page.get_by_test_id("drone-row-drn_03").count() == 0
+    assert "Showing 1 of 3" in page.get_by_test_id("filter-count").inner_text()
+
+@pytest.mark.e2e
+def test_filter_flying_and_search_alpha(skywatch_server, page):
+    import urllib.request
+
+    req = urllib.request.Request(f"{skywatch_server}/api/v1/admin/reset-seed", method="POST")
+    urllib.request.urlopen(req, timeout=3)
+
+    _login(page, skywatch_server)
+    page.get_by_test_id("filter-bar").wait_for(state="visible")
+    page.get_by_test_id("filter-status").select_option("flying")
+    page.get_by_test_id("filter-search").fill("alpha")
 
     assert page.get_by_test_id("drone-row-drn_01").is_visible()
     assert page.get_by_test_id("drone-row-drn_02").count() == 0
@@ -311,6 +346,21 @@ def test_charlie_row_opens_detail(skywatch_server, page):
     page.locator("#drone-name").filter(has_text="Charlie").wait_for(timeout=10000)
     assert "Charlie" in page.locator("#drone-name").inner_text()
 
+@pytest.mark.e2e
+def test_detail_back_returns_to_drones_list(skywatch_server, page):
+    import urllib.request
+
+    req = urllib.request.Request(f"{skywatch_server}/api/v1/admin/reset-seed", method="POST")
+    urllib.request.urlopen(req, timeout=3)
+
+    _login(page, skywatch_server)
+
+    page.get_by_test_id("drone-row-drn_01").click()
+    page.wait_for_url("**/drones/drn_01")
+    page.get_by_test_id("back-link").click()
+    page.wait_for_url("**/drones")
+    page.get_by_test_id("drone-row-drn_01").wait_for(state="visible")
+    
 
 @pytest.mark.e2e
 def test_search_filters_charlie(skywatch_server, page):
