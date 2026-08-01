@@ -271,6 +271,24 @@ def test_acknowledge_requires_auth(client):
     r = client.post("/api/v1/alerts/alert_drn_02_battery/acknowledge")
     assert r.status_code == 401
 
+def test_acknowledge_geofence_alert_goes_to_history(client, pilot_token):
+    headers = auth_headers(pilot_token)
+    alert_id = "alert_drn_03_geofence"
+    r = client.post("/api/v1/alerts/alert_drn_03_geofence/acknowledge",
+                    headers=auth_headers(pilot_token),)
+    assert r.status_code == 200
+
+    after = client.get("/api/v1/alerts", headers=auth_headers(pilot_token))
+    assert after.status_code == 200
+    ids = {a["id"] for a in after.get_json()["alerts"]}
+    assert "alert_drn_03_geofence" not in ids
+
+    history = client.get("/api/v1/alerts/history", headers=auth_headers(pilot_token))
+    assert history.status_code == 200
+    row = next(h for h in history.get_json()["history"] if h["id"] == "alert_drn_03_geofence")
+    assert row["type"] == "GEOFENCE_BREACH"
+  
+
 
 @pytest.mark.parametrize(
     "email,password,expected_status",

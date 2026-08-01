@@ -266,6 +266,12 @@ def test_filter_flying_and_search_alpha(skywatch_server, page):
     assert page.get_by_test_id("drone-row-drn_03").count() == 0
     assert "Showing 1 of 3" in page.get_by_test_id("filter-count").inner_text()
 
+@pytest.mark.e2e
+def test_drones_without_login_redirects_to_login(skywatch_server, page):
+    page.goto(f"{skywatch_server}/drones")
+    page.wait_for_url("**/login")
+    page.get_by_test_id("login-form").wait_for(state="visible")
+  
 
 @pytest.mark.e2e
 def test_filter_status_offline_on_list(skywatch_server, page):
