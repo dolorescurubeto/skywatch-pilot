@@ -169,6 +169,10 @@ playwright install chromium
 pytest tests\test_e2e_skywatch.py -m e2e -v
 ```
 
+On your PC the browser opens **headed** with a short delay between actions (easier to follow).  
+GitHub Actions stays headless. To force headless locally: `$env:SKYWATCH_E2E_HEADLESS=1`.  
+Slower: `$env:SKYWATCH_E2E_SLOWMO=800`. Inspector debug: `$env:PWDEBUG=1`.
+
 Starts the app on port **8081** automatically (so it does not conflict with your manual server on 8080).
 
 ## Product phases

@@ -176,6 +176,16 @@ def test_login_wrong_password_shows_error(skywatch_server, page):
     err.wait_for(state="visible")
     assert "Wrong" in err.inner_text() or "wrong" in err.inner_text().lower()
 
+@pytest.mark.e2e
+def test_login_empty_fields_shows_error(skywatch_server, page):
+    page.goto(f"{skywatch_server}/login")
+    page.get_by_test_id("login-email").fill("")
+    page.get_by_test_id("login-password").fill("")
+    page.locator("#login-form").evaluate("f => f.setAttribute('novalidate', '')")
+    page.get_by_test_id("login-submit").click()
+    err = page.get_by_test_id("login-error")
+    err.filter(has_text="required").wait_for(timeout=5000)
+    assert "required" in err.inner_text().lower()
 
 @pytest.mark.e2e
 def test_map_page_shows_fleet_and_markers(skywatch_server, page):
@@ -269,6 +279,12 @@ def test_filter_flying_and_search_alpha(skywatch_server, page):
 @pytest.mark.e2e
 def test_drones_without_login_redirects_to_login(skywatch_server, page):
     page.goto(f"{skywatch_server}/drones")
+    page.wait_for_url("**/login")
+    page.get_by_test_id("login-form").wait_for(state="visible")
+
+@pytest.mark.e2e
+def test_alerts_without_login_redirects_to_login(skywatch_server, page):
+    page.goto(f"{skywatch_server}/alerts")
     page.wait_for_url("**/login")
     page.get_by_test_id("login-form").wait_for(state="visible")
   
@@ -406,6 +422,28 @@ def test_ack_charlie_offline_goes_to_history(skywatch_server, page):
     page.get_by_test_id("tab-history").click()
     page.get_by_test_id("view-history").wait_for(state="visible")
     page.get_by_test_id("history-item-alert_drn_03_offline").wait_for(state="visible")
+
+@pytest.mark.e2e
+def test_ack_charlie_geofence_goes_to_history(skywatch_server, page):
+    """PRACTICE h: Alerts → Acknowledge Charlie geofence → History."""
+    import urllib.request
+
+    req = urllib.request.Request(f"{skywatch_server}/api/v1/admin/reset-seed", method="POST")
+    urllib.request.urlopen(req, timeout=3)
+
+    _login(page, skywatch_server)
+    page.get_by_test_id("nav-alerts").click()
+    page.wait_for_url("**/alerts")
+
+    geofence = page.get_by_test_id("alert-item-alert_drn_03_geofence")
+    geofence.wait_for(state="visible")
+    page.get_by_test_id("ack-alert_drn_03_geofence").click()
+    geofence.wait_for(state="hidden", timeout=10000)
+
+    page.get_by_test_id("tab-history").click()
+    page.get_by_test_id("view-history").wait_for(state="visible")
+    page.get_by_test_id("history-item-alert_drn_03_geofence").wait_for(state="visible")
+
 
 
 @pytest.mark.e2e
