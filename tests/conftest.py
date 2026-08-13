@@ -17,10 +17,18 @@ sys.path.insert(0, str(ROOT))
 pytest_plugins = ("pytest_playwright",)
 
 
+def pytest_load_initial_conftests(early_config, parser, args):
+    """Default to headed local E2E so you can watch the UI (CI stays headless)."""
+    if os.environ.get("CI") or os.environ.get("SKYWATCH_E2E_HEADLESS") == "1":
+        return
+    if "--headed" not in args and "--headless" not in args:
+        args.append("--headed")
+
+
 @pytest.fixture(scope="session")
 def browser_type_launch_args(browser_type_launch_args):
     """
-    Local practice: show the browser + slow actions so you can follow the UI.
+    Local practice: slow actions so you can follow the UI.
     CI / headless: set CI=1 (GitHub Actions) or SKYWATCH_E2E_HEADLESS=1.
     Optional: SKYWATCH_E2E_SLOWMO=800 for slower, 0 for no delay.
     """

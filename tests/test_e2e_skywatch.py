@@ -484,6 +484,20 @@ def test_filter_alerts_only_on_list(skywatch_server, page):
     assert page.get_by_test_id("alert-badge-drn_02").is_visible()
     assert "Showing 2 of 3" in page.get_by_test_id("filter-count").inner_text()
 
+@pytest.mark.e2e
+def test_filter_alerts_only_and_search_charlie(skywatch_server, page):
+    import urllib.request
+
+    req = urllib.request.Request(f"{skywatch_server}/api/v1/admin/reset-seed", method="POST")
+    urllib.request.urlopen(req, timeout=3)
+
+    _login(page, skywatch_server)
+    page.get_by_test_id("filter-alerts").select_option("alert")
+    page.get_by_test_id("filter-search").fill("charlie")
+    assert page.get_by_test_id("drone-row-drn_03").is_visible()
+    assert page.get_by_test_id("drone-row-drn_01").count() == 0
+    assert page.get_by_test_id("drone-row-drn_02").count() == 0
+
 
 @pytest.mark.e2e
 def test_filter_status_flying_on_map(skywatch_server, page):
