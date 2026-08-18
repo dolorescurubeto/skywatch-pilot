@@ -308,6 +308,10 @@ def test_me_requires_auth(client):
     r = client.get("/api/v1/me")
     assert r.status_code == 401
 
+def test_alerts_history_requires_auth(client):
+    r = client.get("/api/v1/alerts/history")
+    assert r.status_code == 401
+
 
 def test_me_profile_for_pilot(client, pilot_token):
     r = client.get("/api/v1/me", headers=auth_headers(pilot_token))

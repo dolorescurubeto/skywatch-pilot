@@ -287,6 +287,12 @@ def test_alerts_without_login_redirects_to_login(skywatch_server, page):
     page.goto(f"{skywatch_server}/alerts")
     page.wait_for_url("**/login")
     page.get_by_test_id("login-form").wait_for(state="visible")
+
+@pytest.mark.e2e
+def test_map_without_login_redirects_to_login(skywatch_server, page):
+    page.goto(f"{skywatch_server}/map")
+    page.wait_for_url("**/login")
+    page.get_by_test_id("login-form").wait_for(state="visible")
   
 
 @pytest.mark.e2e
